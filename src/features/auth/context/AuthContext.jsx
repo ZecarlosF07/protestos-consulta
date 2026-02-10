@@ -1,14 +1,14 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
 
-import { ROLES } from '../../config/roles'
-import { registrarAuditoria } from '../../services/supabase/audit.service'
+import { ROLES } from '../../../config/roles'
+import { registrarAuditoria } from '../../../services/supabase/audit.service'
 import {
     getCurrentSession,
     onAuthStateChange,
     signIn as authSignIn,
     signOut as authSignOut,
-} from '../services/supabase/auth.service'
-import { getUserProfile, isUserOperational } from '../services/supabase/users.service'
+} from '../../../services/supabase/auth.service'
+import { getUserProfile, isUserOperational } from '../../../services/supabase/users.service'
 
 export const AuthContext = createContext(null)
 
