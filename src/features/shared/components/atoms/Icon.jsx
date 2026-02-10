@@ -10,6 +10,8 @@ const ICON_PATHS = {
     menu: 'M4 6h16M4 12h16M4 18h16',
     close: 'M6 18L18 6M6 6l12 12',
     chevronDown: 'M19 9l-7 7-7-7',
+    alert: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z',
+    checkCircle: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
 }
 
 /** Ícono SVG basado en Heroicons outline */

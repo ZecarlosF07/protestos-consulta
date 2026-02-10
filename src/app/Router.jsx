@@ -2,12 +2,13 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 import { ROLES } from '../config/roles'
 import { ROUTES } from '../config/routes'
-import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
-import { LoginPage } from '../features/auth/components/LoginPage'
-import { AdminLayout } from '../features/admin/components/AdminLayout'
 import { AdminDashboard } from '../features/admin/components/AdminDashboard'
-import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
+import { AdminLayout } from '../features/admin/components/AdminLayout'
 import { AnalystDashboard } from '../features/analyst/components/AnalystDashboard'
+import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
+import { LoginPage } from '../features/auth/components/LoginPage'
+import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
+import { ConsultaProtestosPage } from '../features/consulta/components/ConsultaProtestosPage'
 import { HomeRedirect } from '../features/shared/components/HomeRedirect'
 
 export function Router() {
@@ -48,8 +49,8 @@ export function Router() {
                     }
                 >
                     <Route index element={<AnalystDashboard />} />
+                    <Route path="consulta" element={<ConsultaProtestosPage />} />
                     {/* Placeholder para hitos posteriores */}
-                    <Route path="consulta" element={<PlaceholderPage title="Consulta de Protestos" />} />
                     <Route path="historial" element={<PlaceholderPage title="Historial de Consultas" />} />
                 </Route>
 
