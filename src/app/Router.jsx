@@ -9,6 +9,9 @@ import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
 import { LoginPage } from '../features/auth/components/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { ConsultaProtestosPage } from '../features/consulta/components/ConsultaProtestosPage'
+import { AuditDashboardPage } from '../features/auditoria/components/AuditDashboardPage'
+import { AdminSolicitudesPage } from '../features/levantamiento/components/AdminSolicitudesPage'
+import { AnalistaSolicitudesPage } from '../features/levantamiento/components/AnalistaSolicitudesPage'
 import { HomeRedirect } from '../features/shared/components/HomeRedirect'
 
 export function Router() {
@@ -31,12 +34,12 @@ export function Router() {
                     }
                 >
                     <Route index element={<AdminDashboard />} />
-                    {/* Placeholder para hitos posteriores */}
                     <Route path="analistas" element={<PlaceholderPage title="Gestión de Analistas" />} />
                     <Route path="analistas/nuevo" element={<PlaceholderPage title="Nuevo Analista" />} />
                     <Route path="protestos" element={<PlaceholderPage title="Gestión de Protestos" />} />
                     <Route path="importar" element={<PlaceholderPage title="Importar Protestos" />} />
-                    <Route path="auditoria" element={<PlaceholderPage title="Auditoría" />} />
+                    <Route path="auditoria" element={<AuditDashboardPage />} />
+                    <Route path="solicitudes" element={<AdminSolicitudesPage />} />
                 </Route>
 
                 {/* Rutas del Analista */}
@@ -50,7 +53,7 @@ export function Router() {
                 >
                     <Route index element={<AnalystDashboard />} />
                     <Route path="consulta" element={<ConsultaProtestosPage />} />
-                    {/* Placeholder para hitos posteriores */}
+                    <Route path="solicitudes" element={<AnalistaSolicitudesPage />} />
                     <Route path="historial" element={<PlaceholderPage title="Historial de Consultas" />} />
                 </Route>
 

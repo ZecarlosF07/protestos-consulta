@@ -7,7 +7,9 @@ export const ROUTES = {
     ADMIN_IMPORT: '/admin/importar',
     ADMIN_PROTESTS: '/admin/protestos',
     ADMIN_AUDIT: '/admin/auditoria',
+    ADMIN_SOLICITUDES: '/admin/solicitudes',
     ANALYST_DASHBOARD: '/analista',
     ANALYST_SEARCH: '/analista/consulta',
     ANALYST_HISTORY: '/analista/historial',
+    ANALYST_SOLICITUDES: '/analista/solicitudes',
 }

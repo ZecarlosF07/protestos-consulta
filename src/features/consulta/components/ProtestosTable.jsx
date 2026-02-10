@@ -1,9 +1,10 @@
 import { Card } from '../../shared/components/atoms/Card'
 import { EstadoBadge } from './EstadoBadge'
+import { BotonLevantamiento } from '../../levantamiento/components/BotonLevantamiento'
 import { formatearFecha, formatearMonto } from '../utils/formato.utils'
 
 /** Fila individual de la tabla de protestos */
-function ProtestoRow({ protesto, index }) {
+function ProtestoRow({ protesto, index, onSolicitar, isLoadingSolicitud }) {
     return (
         <tr className={index % 2 === 0 ? 'bg-white' : 'bg-surface'}>
             <td className="whitespace-nowrap px-4 py-3 text-sm text-text-primary">
@@ -15,19 +16,26 @@ function ProtestoRow({ protesto, index }) {
             <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary">
                 {protesto.entidad_fuente}
             </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-text-primary text-right">
+            <td className="whitespace-nowrap px-4 py-3 text-right text-sm font-medium text-text-primary">
                 {formatearMonto(protesto.monto)}
             </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary text-center">
+            <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-text-secondary">
                 {formatearFecha(protesto.fecha_protesto)}
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-center">
                 <EstadoBadge estado={protesto.estado} />
             </td>
-            <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary text-right">
+            <td className="whitespace-nowrap px-4 py-3 text-right text-sm text-text-secondary">
                 {protesto.tarifa_levantamiento
                     ? formatearMonto(protesto.tarifa_levantamiento)
                     : '—'}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-center">
+                <BotonLevantamiento
+                    protesto={protesto}
+                    onSolicitar={onSolicitar}
+                    isLoading={isLoadingSolicitud}
+                />
             </td>
         </tr>
     )
@@ -42,10 +50,11 @@ const HEADERS = [
     { label: 'Fecha', align: 'text-center' },
     { label: 'Estado', align: 'text-center' },
     { label: 'Tarifa', align: 'text-right' },
+    { label: 'Acción', align: 'text-center' },
 ]
 
 /** Tabla de resultados de protestos */
-export function ProtestosTable({ protestos }) {
+export function ProtestosTable({ protestos, onSolicitar, isLoadingSolicitud }) {
     return (
         <Card className="overflow-hidden !p-0">
             <div className="overflow-x-auto">
@@ -68,6 +77,8 @@ export function ProtestosTable({ protestos }) {
                                 key={protesto.id}
                                 protesto={protesto}
                                 index={index}
+                                onSolicitar={onSolicitar}
+                                isLoadingSolicitud={isLoadingSolicitud}
                             />
                         ))}
                     </tbody>

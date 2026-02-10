@@ -5,6 +5,7 @@ import { ResultadoResumen } from './ResultadoResumen'
 import { ProtestosTable } from './ProtestosTable'
 import { ErrorMessage } from './ErrorMessage'
 import { useConsultaProtestos } from '../hooks/useConsultaProtestos'
+import { useSolicitudes } from '../../levantamiento/hooks/useSolicitudes'
 
 /** Página de consulta de protestos para analistas */
 export function ConsultaProtestosPage() {
@@ -18,6 +19,22 @@ export function ConsultaProtestosPage() {
         limpiar,
     } = useConsultaProtestos()
 
+    const {
+        crear: crearSolicitud,
+        operationLoading: isCreando,
+        error: errorSolicitud,
+        limpiarError,
+    } = useSolicitudes({ modo: 'analista' })
+
+    const handleSolicitar = async (protestoId) => {
+        try {
+            await crearSolicitud(protestoId)
+            ejecutarConsulta(documentoConsultado?.numero)
+        } catch {
+            // Error ya manejado en el hook
+        }
+    }
+
     return (
         <div>
             <PageHeader
@@ -29,11 +46,12 @@ export function ConsultaProtestosPage() {
                 <SearchInput
                     onSearch={ejecutarConsulta}
                     isLoading={isLoading}
-                    onClear={limpiar}
+                    onClear={() => { limpiar(); limpiarError() }}
                 />
             </Card>
 
             <ErrorMessage message={error} />
+            <ErrorMessage message={errorSolicitud} />
 
             {isSuccess && documentoConsultado && (
                 <div className="mt-4 space-y-4">
@@ -43,7 +61,11 @@ export function ConsultaProtestosPage() {
                     />
 
                     {protestos.length > 0 && (
-                        <ProtestosTable protestos={protestos} />
+                        <ProtestosTable
+                            protestos={protestos}
+                            onSolicitar={handleSolicitar}
+                            isLoadingSolicitud={isCreando}
+                        />
                     )}
                 </div>
             )}
