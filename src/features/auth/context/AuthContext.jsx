@@ -1,73 +1,86 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { ROLES } from '../../../config/roles'
-import { registrarAuditoria } from '../../../services/supabase/audit.service'
 import {
     getCurrentSession,
     onAuthStateChange,
-    signIn as authSignIn,
-    signOut as authSignOut,
 } from '../../../services/supabase/auth.service'
-import { getUserProfile, isUserOperational } from '../../../services/supabase/users.service'
-
-export const AuthContext = createContext(null)
+import { getUserProfile } from '../../../services/supabase/users.service'
+import { ejecutarLogin, ejecutarLogout, interpretarErrorAuth } from '../services/auth-flow.service'
+import { AuthContext } from './auth-context-def'
 
 export function AuthProvider({ children }) {
     const [session, setSession] = useState(null)
     const [userProfile, setUserProfile] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
+    const mountedRef = useRef(true)
+    const sessionTokenRef = useRef(null)
 
     const loadUserProfile = useCallback(async (userId) => {
         try {
             const profile = await getUserProfile(userId)
-            setUserProfile(profile)
+            if (mountedRef.current) setUserProfile(profile)
             return profile
         } catch (err) {
             console.error('Error al cargar perfil:', err.message)
-            setUserProfile(null)
+            if (mountedRef.current) setUserProfile(null)
             return null
         }
     }, [])
 
     useEffect(() => {
-        let mounted = true
+        mountedRef.current = true
 
         async function initializeAuth() {
             try {
                 const currentSession = await getCurrentSession()
-
-                if (!mounted) return
+                if (!mountedRef.current) return
 
                 if (currentSession?.user) {
+                    sessionTokenRef.current = currentSession.access_token
                     setSession(currentSession)
                     await loadUserProfile(currentSession.user.id)
                 }
             } catch (err) {
                 console.error('Error inicializando auth:', err.message)
             } finally {
-                if (mounted) setLoading(false)
+                if (mountedRef.current) setLoading(false)
             }
         }
 
         initializeAuth()
 
         const subscription = onAuthStateChange(async (event, newSession) => {
-            if (!mounted) return
-
-            setSession(newSession)
+            if (!mountedRef.current) return
 
             if (event === 'SIGNED_IN' && newSession?.user) {
-                await loadUserProfile(newSession.user.id)
+                sessionTokenRef.current = newSession.access_token
+                setSession(newSession)
+                // Solo cargar perfil si no existe aún (evita recarga al volver de otra ventana)
+                if (!userProfile) {
+                    await loadUserProfile(newSession.user.id)
+                }
+                return
             }
 
             if (event === 'SIGNED_OUT') {
+                sessionTokenRef.current = null
+                setSession(null)
                 setUserProfile(null)
+                return
+            }
+
+            // TOKEN_REFRESHED: solo actualizar si el token realmente cambió
+            if (event === 'TOKEN_REFRESHED' && newSession) {
+                if (newSession.access_token === sessionTokenRef.current) return
+                sessionTokenRef.current = newSession.access_token
+                setSession(newSession)
             }
         })
 
         return () => {
-            mounted = false
+            mountedRef.current = false
             subscription.unsubscribe()
         }
     }, [loadUserProfile])
@@ -76,76 +89,41 @@ export function AuthProvider({ children }) {
         setError(null)
 
         try {
-            const data = await authSignIn(email, password)
-            const profile = await getUserProfile(data.user.id)
-
-            if (!isUserOperational(profile)) {
-                await authSignOut()
-                setSession(null)
-                setUserProfile(null)
-
-                registrarAuditoria({
-                    usuarioId: data.user.id,
-                    entidadFinancieraId: profile?.entidad_financiera_id,
-                    accion: 'LOGIN_BLOQUEADO',
-                    descripcion: 'Intento de acceso con cuenta bloqueada o entidad inactiva',
-                })
-
-                const reason = profile?.estado === 'bloqueado'
-                    ? 'Tu cuenta se encuentra bloqueada.'
-                    : 'Tu entidad financiera se encuentra bloqueada.'
-
-                throw new Error(reason)
-            }
-
-            setUserProfile(profile)
-
-            registrarAuditoria({
-                usuarioId: data.user.id,
-                entidadFinancieraId: profile?.entidad_financiera_id,
-                accion: 'LOGIN_EXITOSO',
-                descripcion: `Inicio de sesión: ${profile.nombre_completo}`,
-            })
-
+            const profile = await ejecutarLogin(email, password)
+            if (mountedRef.current) setUserProfile(profile)
             return profile
         } catch (err) {
-            const message = err.message === 'Invalid login credentials'
-                ? 'Credenciales incorrectas. Verifique su email y contraseña.'
-                : err.message
-
-            setError(message)
+            const message = interpretarErrorAuth(err)
+            if (mountedRef.current) setError(message)
             throw new Error(message)
         }
     }, [])
 
     const signOut = useCallback(async () => {
-        if (userProfile) {
-            registrarAuditoria({
-                usuarioId: userProfile.id,
-                entidadFinancieraId: userProfile.entidad_financiera_id,
-                accion: 'LOGOUT',
-                descripcion: `Cierre de sesión: ${userProfile.nombre_completo}`,
-            })
-        }
+        await ejecutarLogout(userProfile)
 
-        await authSignOut()
-        setSession(null)
-        setUserProfile(null)
-        setError(null)
+        if (mountedRef.current) {
+            sessionTokenRef.current = null
+            setSession(null)
+            setUserProfile(null)
+            setError(null)
+        }
     }, [userProfile])
 
+    // session se excluye de las dependencias del memo para evitar re-renders
+    // cuando solo cambia el token (ej: al volver de otra ventana).
+    // isAuthenticated usa sessionTokenRef que siempre está sincronizado.
     const value = useMemo(() => ({
-        session,
         user: userProfile,
         loading,
         error,
-        isAuthenticated: !!session && !!userProfile,
+        isAuthenticated: !!sessionTokenRef.current && !!userProfile,
         isAdmin: userProfile?.rol === ROLES.ADMIN,
         isAnalista: userProfile?.rol === ROLES.ANALISTA,
         signIn,
         signOut,
         clearError: () => setError(null),
-    }), [session, userProfile, loading, error, signIn, signOut])
+    }), [userProfile, loading, error, signIn, signOut])
 
     return (
         <AuthContext.Provider value={value}>

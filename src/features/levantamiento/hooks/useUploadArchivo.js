@@ -2,10 +2,11 @@ import { useCallback, useState } from 'react'
 
 import { useAuth } from '../../auth/hooks/useAuth'
 import { registrarAuditoria } from '../../../services/supabase/audit.service'
-import { subirArchivo } from '../services/archivos.service'
+import { subirArchivo, validarArchivo } from '../services/archivos.service'
 
 /**
  * Hook para gestionar upload de archivos de solicitudes.
+ * Incluye validación previa, estado de carga, y registro de auditoría.
  */
 export function useUploadArchivo() {
     const { user } = useAuth()
@@ -14,8 +15,17 @@ export function useUploadArchivo() {
     const [error, setError] = useState(null)
     const [archivoSubido, setArchivoSubido] = useState(null)
 
+    /** Valida un archivo sin subirlo */
+    const validar = useCallback((file) => {
+        return validarArchivo(file)
+    }, [])
+
+    /** Sube un archivo al storage y registra en BD */
     const subir = useCallback(async (file, solicitudId, tipo) => {
-        if (!user) return null
+        if (!user) {
+            setError('Sesión no activa. Inicie sesión nuevamente.')
+            return null
+        }
 
         setIsUploading(true)
         setError(null)
@@ -44,14 +54,17 @@ export function useUploadArchivo() {
         }
     }, [user])
 
+    const limpiar = useCallback(() => {
+        setError(null)
+        setArchivoSubido(null)
+    }, [])
+
     return {
         subir,
+        validar,
         isUploading,
         error,
         archivoSubido,
-        limpiar: () => {
-            setError(null)
-            setArchivoSubido(null)
-        },
+        limpiar,
     }
 }

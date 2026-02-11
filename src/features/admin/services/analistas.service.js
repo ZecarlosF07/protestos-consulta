@@ -1,3 +1,4 @@
+import { ROUTES } from '../../../config/routes'
 import { supabase } from '../../../services/supabase/client'
 
 const ANALISTA_SELECT = `
@@ -123,7 +124,7 @@ export async function desbloquearAnalista(analistaId) {
 /** Resetea la contraseña de un analista enviando email de reseteo */
 export async function resetearPasswordAnalista(email) {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/login`,
+        redirectTo: `${window.location.origin}${ROUTES.LOGIN}`,
     })
 
     if (error) throw new Error(error.message)

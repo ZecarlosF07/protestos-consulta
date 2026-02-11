@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 
 import { ROLES } from '../../../config/roles'
 import { ROUTES } from '../../../config/routes'
@@ -7,16 +7,20 @@ import { APP_NAME } from '../../../config/env'
 import { useAuth } from '../hooks/useAuth'
 import { LoginForm } from './LoginForm'
 
+/** Determina la ruta de dashboard según el rol */
+function getDashboardRoute(rol) {
+    return rol === ROLES.ADMIN
+        ? ROUTES.ADMIN_DASHBOARD
+        : ROUTES.ANALYST_DASHBOARD
+}
+
 export function LoginPage() {
     const { isAuthenticated, user, signIn, error, clearError } = useAuth()
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const navigate = useNavigate()
 
     if (isAuthenticated && user) {
-        const redirectTo = user.rol === ROLES.ADMIN
-            ? ROUTES.ADMIN_DASHBOARD
-            : ROUTES.ANALYST_DASHBOARD
-
-        return <Navigate to={redirectTo} replace />
+        return <Navigate to={getDashboardRoute(user.rol)} replace />
     }
 
     async function handleLogin(email, password) {
@@ -24,7 +28,8 @@ export function LoginPage() {
         clearError()
 
         try {
-            await signIn(email, password)
+            const profile = await signIn(email, password)
+            navigate(getDashboardRoute(profile.rol), { replace: true })
         } catch {
             // Error ya manejado por AuthContext
         } finally {

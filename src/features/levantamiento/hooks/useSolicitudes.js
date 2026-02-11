@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { useAuth } from '../../auth/hooks/useAuth'
 import { registrarAuditoria } from '../../../services/supabase/audit.service'
@@ -12,17 +12,21 @@ import {
 /**
  * Hook para gestionar solicitudes de levantamiento.
  * Funciona para analistas (mis solicitudes) y admin (todas).
+ * Usa user.id como dependencia estable para evitar re-fetches innecesarios.
  */
 export function useSolicitudes({ modo = 'analista' } = {}) {
     const { user } = useAuth()
+    const userRef = useRef(user)
+    userRef.current = user
 
+    const userId = user?.id
     const [solicitudes, setSolicitudes] = useState([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
     const [operationLoading, setOperationLoading] = useState(false)
 
     const cargarSolicitudes = useCallback(async () => {
-        if (!user) return
+        if (!userId) return
 
         setIsLoading(true)
         setError(null)
@@ -30,7 +34,7 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         try {
             const data = modo === 'admin'
                 ? await obtenerTodasSolicitudes()
-                : await obtenerMisSolicitudes(user.id)
+                : await obtenerMisSolicitudes(userId)
 
             setSolicitudes(data)
         } catch (err) {
@@ -39,14 +43,15 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         } finally {
             setIsLoading(false)
         }
-    }, [user, modo])
+    }, [userId, modo])
 
     useEffect(() => {
         cargarSolicitudes()
     }, [cargarSolicitudes])
 
     const crear = useCallback(async (protestoId) => {
-        if (!user) return null
+        const currentUser = userRef.current
+        if (!currentUser) return null
 
         setOperationLoading(true)
         setError(null)
@@ -54,13 +59,13 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         try {
             const solicitud = await crearSolicitud({
                 protestoId,
-                usuarioId: user.id,
-                entidadFinancieraId: user.entidad_financiera_id,
+                usuarioId: currentUser.id,
+                entidadFinancieraId: currentUser.entidad_financiera_id,
             })
 
             registrarAuditoria({
-                usuarioId: user.id,
-                entidadFinancieraId: user.entidad_financiera_id,
+                usuarioId: currentUser.id,
+                entidadFinancieraId: currentUser.entidad_financiera_id,
                 accion: 'SOLICITUD_CREADA',
                 entidadAfectada: 'solicitudes_levantamiento',
                 entidadAfectadaId: solicitud.id,
@@ -75,10 +80,11 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         } finally {
             setOperationLoading(false)
         }
-    }, [user, cargarSolicitudes])
+    }, [cargarSolicitudes])
 
     const cambiarEstado = useCallback(async (solicitudId, nuevoEstado, observaciones = null) => {
-        if (!user) return null
+        const currentUser = userRef.current
+        if (!currentUser) return null
 
         setOperationLoading(true)
         setError(null)
@@ -91,8 +97,8 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
             )
 
             registrarAuditoria({
-                usuarioId: user.id,
-                entidadFinancieraId: user.entidad_financiera_id,
+                usuarioId: currentUser.id,
+                entidadFinancieraId: currentUser.entidad_financiera_id,
                 accion: `SOLICITUD_${nuevoEstado.toUpperCase()}`,
                 entidadAfectada: 'solicitudes_levantamiento',
                 entidadAfectadaId: solicitudId,
@@ -108,7 +114,7 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         } finally {
             setOperationLoading(false)
         }
-    }, [user, cargarSolicitudes])
+    }, [cargarSolicitudes])
 
     return {
         solicitudes,

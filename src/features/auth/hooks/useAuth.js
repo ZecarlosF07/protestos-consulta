@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 
-import { AuthContext } from '../context/AuthContext'
+import { AuthContext } from '../context/auth-context-def'
 
 /** Hook para acceder al contexto de autenticación */
 export function useAuth() {

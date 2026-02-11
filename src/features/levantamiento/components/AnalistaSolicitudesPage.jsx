@@ -171,6 +171,7 @@ function SolicitudDetalle({ solicitud, onDescargar, onUploaded }) {
             {puedeSubirArchivos && (
                 <UploadArchivoForm
                     solicitudId={solicitud.id}
+                    archivosExistentes={solicitud.archivos ?? []}
                     onUploaded={onUploaded}
                 />
             )}

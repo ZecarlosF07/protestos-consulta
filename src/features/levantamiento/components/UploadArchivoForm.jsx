@@ -3,78 +3,88 @@ import { useState } from 'react'
 import { Icon } from '../../shared/components/atoms/Icon'
 import { useUploadArchivo } from '../hooks/useUploadArchivo'
 import { ARCHIVO_TIPOS, UPLOAD_CONFIG } from '../types/levantamiento.types'
+import { FileSelectSlot } from './SingleUploadSlot'
 
-/** Formulario para subir archivos a una solicitud */
-export function UploadArchivoForm({ solicitudId, onUploaded }) {
+/**
+ * Formulario de subida de documentos para una solicitud.
+ * Dos slots de selección independientes + un botón único para subir ambos.
+ */
+export function UploadArchivoForm({ solicitudId, archivosExistentes = [], onUploaded }) {
     const { subir, isUploading, error } = useUploadArchivo()
-    const [tipo, setTipo] = useState(ARCHIVO_TIPOS.COMPROBANTE)
+    const [comprobanteFile, setComprobanteFile] = useState(null)
+    const [formatoFile, setFormatoFile] = useState(null)
+    const [uploadError, setUploadError] = useState(null)
 
-    const handleFileChange = async (e) => {
-        const file = e.target.files?.[0]
-        if (!file) return
+    const comprobanteExistente = archivosExistentes.find(
+        (a) => a.tipo === ARCHIVO_TIPOS.COMPROBANTE
+    )
+    const formatoExistente = archivosExistentes.find(
+        (a) => a.tipo === ARCHIVO_TIPOS.FORMATO
+    )
 
-        const resultado = await subir(file, solicitudId, tipo)
-        if (resultado && onUploaded) {
-            onUploaded(resultado)
+    const hayArchivosParaSubir = comprobanteFile || formatoFile
+
+    const handleSubirTodos = async () => {
+        setUploadError(null)
+
+        try {
+            if (comprobanteFile) {
+                await subir(comprobanteFile, solicitudId, ARCHIVO_TIPOS.COMPROBANTE)
+                setComprobanteFile(null)
+            }
+
+            if (formatoFile) {
+                await subir(formatoFile, solicitudId, ARCHIVO_TIPOS.FORMATO)
+                setFormatoFile(null)
+            }
+
+            onUploaded?.()
+        } catch (err) {
+            setUploadError(err.message)
         }
-
-        // Limpiar input
-        e.target.value = ''
     }
 
+    const displayError = uploadError || error
+
     return (
-        <div className="space-y-3 rounded-lg border border-border p-4">
+        <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                Subir Documento
+                Documentos Requeridos
             </h4>
 
-            <div className="flex gap-2">
-                <TipoButton
-                    activo={tipo === ARCHIVO_TIPOS.COMPROBANTE}
-                    onClick={() => setTipo(ARCHIVO_TIPOS.COMPROBANTE)}
-                    label="Comprobante de pago"
-                />
-                <TipoButton
-                    activo={tipo === ARCHIVO_TIPOS.FORMATO}
-                    onClick={() => setTipo(ARCHIVO_TIPOS.FORMATO)}
-                    label="Formato firmado"
-                />
-            </div>
+            <FileSelectSlot
+                tipo={ARCHIVO_TIPOS.COMPROBANTE}
+                archivoExistente={comprobanteExistente}
+                selectedFile={comprobanteFile}
+                onFileChange={setComprobanteFile}
+            />
 
-            <label className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-border px-4 py-6 text-sm text-text-secondary transition-colors hover:border-accent hover:bg-accent/5">
-                <Icon name="upload" className="h-5 w-5" />
-                {isUploading ? 'Subiendo...' : 'Seleccionar archivo'}
-                <input
-                    type="file"
-                    className="hidden"
-                    accept={UPLOAD_CONFIG.ALLOWED_EXTENSIONS.join(',')}
-                    onChange={handleFileChange}
-                    disabled={isUploading}
-                />
-            </label>
+            <FileSelectSlot
+                tipo={ARCHIVO_TIPOS.FORMATO}
+                archivoExistente={formatoExistente}
+                selectedFile={formatoFile}
+                onFileChange={setFormatoFile}
+            />
 
             <p className="text-xs text-text-muted">
                 Formatos: {UPLOAD_CONFIG.ALLOWED_EXTENSIONS.join(', ')} ·
                 Máximo {UPLOAD_CONFIG.MAX_SIZE_MB}MB
             </p>
 
-            {error && (
-                <p className="text-xs text-red-600">{error}</p>
+            {displayError && (
+                <p className="text-xs text-red-600">{displayError}</p>
+            )}
+
+            {hayArchivosParaSubir && (
+                <button
+                    onClick={handleSubirTodos}
+                    disabled={isUploading}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-50"
+                >
+                    <Icon name="upload" className="h-4 w-4" />
+                    {isUploading ? 'Subiendo documentos...' : 'Subir documentos'}
+                </button>
             )}
         </div>
-    )
-}
-
-function TipoButton({ activo, onClick, label }) {
-    return (
-        <button
-            onClick={onClick}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${activo
-                    ? 'bg-accent text-white'
-                    : 'border border-border text-text-secondary hover:bg-surface-dark'
-                }`}
-        >
-            {label}
-        </button>
     )
 }
