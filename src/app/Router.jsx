@@ -1,9 +1,11 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 
 import { ROLES } from '../config/roles'
 import { ROUTES } from '../config/routes'
 import { AdminDashboard } from '../features/admin/components/AdminDashboard'
 import { AdminLayout } from '../features/admin/components/AdminLayout'
+import { AnalistasPage } from '../features/admin/components/AnalistasPage'
+import { ProtestosPage } from '../features/admin/components/ProtestosPage'
 import { AnalystDashboard } from '../features/analyst/components/AnalystDashboard'
 import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
 import { LoginPage } from '../features/auth/components/LoginPage'
@@ -34,9 +36,9 @@ export function Router() {
                     }
                 >
                     <Route index element={<AdminDashboard />} />
-                    <Route path="analistas" element={<PlaceholderPage title="Gestión de Analistas" />} />
-                    <Route path="analistas/nuevo" element={<PlaceholderPage title="Nuevo Analista" />} />
-                    <Route path="protestos" element={<PlaceholderPage title="Gestión de Protestos" />} />
+                    <Route path="analistas" element={<AnalistasPage />} />
+                    <Route path="analistas/nuevo" element={<Navigate to={ROUTES.ADMIN_ANALYSTS} replace />} />
+                    <Route path="protestos" element={<ProtestosPage />} />
                     <Route path="importar" element={<PlaceholderPage title="Importar Protestos" />} />
                     <Route path="auditoria" element={<AuditDashboardPage />} />
                     <Route path="solicitudes" element={<AdminSolicitudesPage />} />
