@@ -4,6 +4,7 @@ import { ROUTES } from './routes'
 export const ADMIN_NAV_ITEMS = [
     { label: 'Dashboard', path: ROUTES.ADMIN_DASHBOARD, icon: 'dashboard' },
     { label: 'Analistas', path: ROUTES.ADMIN_ANALYSTS, icon: 'users' },
+    { label: 'Entidades', path: ROUTES.ADMIN_ENTITIES, icon: 'building' },
     { label: 'Protestos', path: ROUTES.ADMIN_PROTESTS, icon: 'file' },
     { label: 'Solicitudes', path: ROUTES.ADMIN_SOLICITUDES, icon: 'clipboard' },
     { label: 'Auditoría', path: ROUTES.ADMIN_AUDIT, icon: 'shield' },

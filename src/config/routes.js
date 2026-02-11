@@ -6,6 +6,7 @@ export const ROUTES = {
     ADMIN_ANALYST_FORM: '/admin/analistas/nuevo',
     ADMIN_IMPORT: '/admin/importar',
     ADMIN_PROTESTS: '/admin/protestos',
+    ADMIN_ENTITIES: '/admin/entidades',
     ADMIN_AUDIT: '/admin/auditoria',
     ADMIN_SOLICITUDES: '/admin/solicitudes',
     ANALYST_DASHBOARD: '/analista',

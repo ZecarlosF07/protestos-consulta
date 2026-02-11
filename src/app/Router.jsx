@@ -5,6 +5,7 @@ import { ROUTES } from '../config/routes'
 import { AdminDashboard } from '../features/admin/components/AdminDashboard'
 import { AdminLayout } from '../features/admin/components/AdminLayout'
 import { AnalistasPage } from '../features/admin/components/AnalistasPage'
+import { EntidadesPage } from '../features/admin/components/EntidadesPage'
 import { ProtestosPage } from '../features/admin/components/ProtestosPage'
 import { AnalystDashboard } from '../features/analyst/components/AnalystDashboard'
 import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
@@ -38,6 +39,7 @@ export function Router() {
                     <Route index element={<AdminDashboard />} />
                     <Route path="analistas" element={<AnalistasPage />} />
                     <Route path="analistas/nuevo" element={<Navigate to={ROUTES.ADMIN_ANALYSTS} replace />} />
+                    <Route path="entidades" element={<EntidadesPage />} />
                     <Route path="protestos" element={<ProtestosPage />} />
                     <Route path="importar" element={<PlaceholderPage title="Importar Protestos" />} />
                     <Route path="auditoria" element={<AuditDashboardPage />} />

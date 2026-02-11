@@ -112,5 +112,41 @@ export const PROTESTO_TRANSITIONS = {
     levantado: [],
 }
 
+/**
+ * @typedef {'activa'|'bloqueada'} EstadoEntidad
+ */
+
+/**
+ * @typedef {Object} EntidadFinancieraRow
+ * @property {string} id
+ * @property {string} nombre
+ * @property {EstadoEntidad} estado
+ * @property {string} created_at
+ * @property {string} updated_at
+ */
+
+/**
+ * @typedef {Object} CrearEntidadPayload
+ * @property {string} nombre
+ */
+
+/** Estados válidos de entidad financiera */
+export const ESTADO_ENTIDAD = {
+    ACTIVA: 'activa',
+    BLOQUEADA: 'bloqueada',
+}
+
+/** Labels de estado de entidad financiera */
+export const ESTADO_ENTIDAD_LABELS = {
+    activa: 'Activa',
+    bloqueada: 'Bloqueada',
+}
+
+/** Estilos de badge de estado de entidad financiera */
+export const ESTADO_ENTIDAD_STYLES = {
+    activa: 'bg-emerald-50 text-emerald-700',
+    bloqueada: 'bg-red-50 text-red-700',
+}
+
 /** Cantidad de registros por página */
 export const PAGE_SIZE = 15
