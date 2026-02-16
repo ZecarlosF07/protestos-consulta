@@ -1,13 +1,8 @@
 import { useRef, useState } from 'react'
 
 import { Icon } from '../../shared/components/atoms/Icon'
-import { UPLOAD_CONFIG } from '../types/levantamiento.types'
+import { UPLOAD_CONFIG, ARCHIVO_TIPO_LABELS } from '../types/levantamiento.types'
 import { validarArchivo } from '../services/archivos.service'
-
-const TIPO_LABELS = {
-    comprobante_pago: 'Comprobante de Pago',
-    formato_firmado: 'Formato Firmado',
-}
 
 /**
  * Slot de selección de archivo (sin botón de subir).
@@ -16,7 +11,7 @@ const TIPO_LABELS = {
 export function FileSelectSlot({ tipo, archivoExistente, selectedFile, onFileChange }) {
     const [validationError, setValidationError] = useState(null)
     const inputRef = useRef(null)
-    const label = TIPO_LABELS[tipo] ?? tipo
+    const label = ARCHIVO_TIPO_LABELS[tipo] ?? tipo
 
     const handleSelect = (e) => {
         const file = e.target.files?.[0]

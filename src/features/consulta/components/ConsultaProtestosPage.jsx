@@ -1,11 +1,16 @@
+import { useState } from 'react'
+
 import { PageHeader } from '../../shared/components/organisms/PageHeader'
 import { Card } from '../../shared/components/atoms/Card'
+import { Icon } from '../../shared/components/atoms/Icon'
 import { SearchInput } from './SearchInput'
 import { ResultadoResumen } from './ResultadoResumen'
 import { ProtestosTable } from './ProtestosTable'
 import { ErrorMessage } from './ErrorMessage'
 import { useConsultaProtestos } from '../hooks/useConsultaProtestos'
 import { useSolicitudes } from '../../levantamiento/hooks/useSolicitudes'
+import { SolicitudFormModal } from '../../levantamiento/components/SolicitudFormModal'
+import { FORMATO_PROTESTO_URL } from '../../levantamiento/types/levantamiento.types'
 
 /** Página de consulta de protestos para analistas */
 export function ConsultaProtestosPage() {
@@ -26,9 +31,16 @@ export function ConsultaProtestosPage() {
         limpiarError,
     } = useSolicitudes({ modo: 'analista' })
 
-    const handleSolicitar = async (protestoId) => {
+    const [protestoSeleccionado, setProtestoSeleccionado] = useState(null)
+
+    const handleSolicitar = (protesto) => {
+        setProtestoSeleccionado(protesto)
+    }
+
+    const handleConfirmSolicitud = async (protestoId, camposAdicionales) => {
         try {
-            await crearSolicitud(protestoId)
+            await crearSolicitud(protestoId, camposAdicionales)
+            setProtestoSeleccionado(null)
             ejecutarConsulta(documentoConsultado?.numero)
         } catch {
             // Error ya manejado en el hook
@@ -37,10 +49,13 @@ export function ConsultaProtestosPage() {
 
     return (
         <div>
-            <PageHeader
-                title="Consulta de Protestos"
-                subtitle="Busque por número de documento (DNI o RUC) para verificar protestos registrados"
-            />
+            <div className="flex items-center justify-between">
+                <PageHeader
+                    title="Consulta de Protestos"
+                    subtitle="Busque por número de documento (DNI o RUC) para verificar protestos registrados"
+                />
+                <BotonDescargarFormato />
+            </div>
 
             <Card className="mb-6">
                 <SearchInput
@@ -78,6 +93,30 @@ export function ConsultaProtestosPage() {
                     </div>
                 </div>
             )}
+
+            {protestoSeleccionado && (
+                <SolicitudFormModal
+                    protesto={protestoSeleccionado}
+                    onConfirm={handleConfirmSolicitud}
+                    onClose={() => setProtestoSeleccionado(null)}
+                    isLoading={isCreando}
+                />
+            )}
         </div>
+    )
+}
+
+/** Botón para descargar el formato oficial de protesto */
+function BotonDescargarFormato() {
+    return (
+        <a
+            href={FORMATO_PROTESTO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
+        >
+            <Icon name="download" className="h-4 w-4" />
+            Descargar Formato
+        </a>
     )
 }

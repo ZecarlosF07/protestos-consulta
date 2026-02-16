@@ -96,6 +96,9 @@ Solicitudes generadas para levantar protestos.
 | protesto_id | uuid (FK) | Protesto asociado |
 | usuario_id | uuid (FK) | Analista solicitante |
 | entidad_financiera_id | uuid (FK) | Entidad |
+| observaciones | text | Observaciones del administrador |
+| tipo_comprobante | varchar | boleta / factura |
+| requiere_certificado | boolean | Si requiere Certificado de Título Regularizado |
 | estado | varchar | Registrada / En revisión / Aprobada / Rechazada |
 | created_at | timestamp | Fecha de solicitud |
 | updated_at | timestamp | Última actualización |
@@ -111,8 +114,10 @@ Documentos cargados para solicitudes.
 |-----|-----|-------------|
 | id | uuid (PK) | Identificador |
 | solicitud_id | uuid (FK) | Solicitud asociada |
-| tipo | varchar | Comprobante / Formato firmado |
+| tipo | varchar | comprobante_pago / formato_firmado / carta_no_adeudo / comprobante_certificado / certificado_emitido |
+| nombre_archivo | varchar | Nombre original del archivo |
 | ruta | varchar | Ruta en storage |
+| tamano_bytes | bigint | Tamaño del archivo en bytes |
 | created_at | timestamp | Fecha de carga |
 | deleted_at | timestamp | Soft delete |
 

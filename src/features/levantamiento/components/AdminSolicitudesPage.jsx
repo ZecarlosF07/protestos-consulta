@@ -1,10 +1,11 @@
 import { useState } from 'react'
 
 import { PageHeader } from '../../shared/components/organisms/PageHeader'
+import { Icon } from '../../shared/components/atoms/Icon'
 import { useSolicitudes } from '../hooks/useSolicitudes'
 import { SolicitudesTable } from './SolicitudesTable'
 import { SolicitudDetailModal } from './SolicitudDetailModal'
-import { Icon } from '../../shared/components/atoms/Icon'
+import { FORMATO_PROTESTO_URL } from '../types/levantamiento.types'
 
 /** Página de gestión de solicitudes para el Administrador */
 export function AdminSolicitudesPage() {
@@ -29,6 +30,14 @@ export function AdminSolicitudesPage() {
         setSelectedSolicitud(null)
     }
 
+    const handleRecargar = async () => {
+        await recargar()
+        if (selectedSolicitud) {
+            const actualizada = solicitudes.find((s) => s.id === selectedSolicitud.id)
+            if (actualizada) setSelectedSolicitud(actualizada)
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="flex items-center justify-center py-20">
@@ -47,13 +56,16 @@ export function AdminSolicitudesPage() {
                     title="Gestión de Solicitudes"
                     subtitle="Revisar, aprobar o rechazar solicitudes de levantamiento"
                 />
-                <button
-                    onClick={recargar}
-                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
-                >
-                    <Icon name="refresh" className="h-4 w-4" />
-                    Actualizar
-                </button>
+                <div className="flex items-center gap-2">
+                    <BotonDescargarFormato />
+                    <button
+                        onClick={recargar}
+                        className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
+                    >
+                        <Icon name="refresh" className="h-4 w-4" />
+                        Actualizar
+                    </button>
+                </div>
             </div>
 
             {error && (
@@ -78,10 +90,26 @@ export function AdminSolicitudesPage() {
                     solicitud={selectedSolicitud}
                     onClose={() => setSelectedSolicitud(null)}
                     onCambiarEstado={handleCambiarEstado}
+                    onRecargar={handleRecargar}
                     isLoading={operationLoading}
                 />
             )}
         </div>
+    )
+}
+
+/** Botón para descargar formato oficial */
+function BotonDescargarFormato() {
+    return (
+        <a
+            href={FORMATO_PROTESTO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
+        >
+            <Icon name="download" className="h-4 w-4" />
+            Descargar Formato
+        </a>
     )
 }
 
@@ -102,8 +130,8 @@ function FiltroEstado({ valor, onChange, conteos }) {
                     key={key}
                     onClick={() => onChange(key)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${valor === key
-                            ? 'bg-accent text-white'
-                            : 'border border-border bg-white text-text-secondary hover:bg-surface-dark'
+                        ? 'bg-accent text-white'
+                        : 'border border-border bg-white text-text-secondary hover:bg-surface-dark'
                         }`}
                 >
                     {label} ({conteos[key] ?? 0})

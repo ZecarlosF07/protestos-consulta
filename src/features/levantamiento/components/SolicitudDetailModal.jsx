@@ -6,11 +6,12 @@ import { SolicitudEstadoBadge } from '../../shared/components/atoms/SolicitudEst
 import { EstadoBadge } from '../../consulta/components/EstadoBadge'
 import { formatearMonto, formatearFecha } from '../../consulta/utils/formato.utils'
 import { formatearFechaHora, formatearTamanoArchivo } from '../../auditoria/utils/auditoria.utils'
-import { SOLICITUD_TRANSITIONS } from '../types/levantamiento.types'
+import { SOLICITUD_TRANSITIONS, ARCHIVO_TIPO_LABELS, ARCHIVO_TIPOS } from '../types/levantamiento.types'
 import { obtenerUrlDescarga } from '../services/archivos.service'
+import { AdminCertificadoUpload } from './AdminCertificadoUpload'
 
 /** Modal de detalle de una solicitud de levantamiento (Admin) */
-export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, isLoading }) {
+export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, onRecargar, isLoading }) {
     const [observaciones, setObservaciones] = useState(solicitud.observaciones ?? '')
     const transicionesPermitidas = SOLICITUD_TRANSITIONS[solicitud.estado] ?? []
 
@@ -31,10 +32,18 @@ export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, isLo
                 <div className="space-y-5 p-6">
                     <ProtestoInfo protesto={solicitud.protesto} />
                     <SolicitudInfo solicitud={solicitud} />
+                    <CamposAdicionalesAdmin solicitud={solicitud} />
                     <ArchivosSection
                         archivos={solicitud.archivos}
                         onDescargar={handleDescargar}
                     />
+
+                    {solicitud.requiere_certificado && (
+                        <AdminCertificadoUpload
+                            solicitud={solicitud}
+                            onUploaded={onRecargar}
+                        />
+                    )}
 
                     {transicionesPermitidas.length > 0 && (
                         <AccionesAdmin
@@ -96,23 +105,41 @@ function ProtestoInfo({ protesto }) {
 function SolicitudInfo({ solicitud }) {
     return (
         <div className="grid grid-cols-2 gap-3 text-sm">
-            <InfoField
-                label="Analista"
-                value={solicitud.usuario?.nombre_completo}
-            />
-            <InfoField
-                label="Entidad"
-                value={solicitud.entidad_financiera?.nombre}
-            />
-            <InfoField
-                label="Fecha solicitud"
-                value={formatearFechaHora(solicitud.created_at)}
-            />
+            <InfoField label="Analista" value={solicitud.usuario?.nombre_completo} />
+            <InfoField label="Entidad" value={solicitud.entidad_financiera?.nombre} />
+            <InfoField label="Fecha solicitud" value={formatearFechaHora(solicitud.created_at)} />
             <div className="flex items-center gap-2">
                 <span className="text-text-muted">Estado:</span>
                 <SolicitudEstadoBadge estado={solicitud.estado} />
             </div>
         </div>
+    )
+}
+
+/** Muestra campos adicionales del Hito 11 en vista admin */
+function CamposAdicionalesAdmin({ solicitud }) {
+    const hasCampos = solicitud.tipo_comprobante || solicitud.requiere_certificado
+
+    if (!hasCampos) return null
+
+    return (
+        <Card>
+            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                Información Adicional
+            </h4>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+                {solicitud.tipo_comprobante && (
+                    <InfoField
+                        label="Tipo comprobante"
+                        value={solicitud.tipo_comprobante === 'boleta' ? 'Boleta' : 'Factura'}
+                    />
+                )}
+                <InfoField
+                    label="Certificado requerido"
+                    value={solicitud.requiere_certificado ? 'Sí (S/ 30)' : 'No'}
+                />
+            </div>
+        </Card>
     )
 }
 
@@ -146,7 +173,7 @@ function ArchivosSection({ archivos, onDescargar }) {
                                 {archivo.nombre_archivo}
                             </p>
                             <p className="text-xs text-text-muted">
-                                {TIPO_LABELS[archivo.tipo] ?? archivo.tipo} ·{' '}
+                                {ARCHIVO_TIPO_LABELS[archivo.tipo] ?? archivo.tipo} ·{' '}
                                 {formatearTamanoArchivo(archivo.tamano_bytes)}
                             </p>
                         </div>
@@ -161,11 +188,6 @@ function ArchivosSection({ archivos, onDescargar }) {
             </div>
         </Card>
     )
-}
-
-const TIPO_LABELS = {
-    comprobante_pago: 'Comprobante de pago',
-    formato_firmado: 'Formato firmado',
 }
 
 function AccionesAdmin({ transiciones, observaciones, onObservacionesChange, onAccion, isLoading }) {
@@ -189,8 +211,7 @@ function AccionesAdmin({ transiciones, observaciones, onObservacionesChange, onA
                         key={estado}
                         onClick={() => onAccion(estado)}
                         disabled={isLoading}
-                        className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${ACCION_STYLES[estado] ?? 'bg-gray-500 hover:bg-gray-600'
-                            }`}
+                        className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${ACCION_STYLES[estado] ?? 'bg-gray-500 hover:bg-gray-600'}`}
                     >
                         {isLoading ? 'Procesando...' : ACCION_LABELS[estado]}
                     </button>

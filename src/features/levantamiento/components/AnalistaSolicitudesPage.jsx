@@ -9,6 +9,7 @@ import { formatearMonto, formatearFecha } from '../../consulta/utils/formato.uti
 import { formatearFechaHora, formatearTamanoArchivo } from '../../auditoria/utils/auditoria.utils'
 import { UploadArchivoForm } from './UploadArchivoForm'
 import { obtenerUrlDescarga } from '../services/archivos.service'
+import { ARCHIVO_TIPO_LABELS, FORMATO_PROTESTO_URL } from '../types/levantamiento.types'
 
 /** Página de solicitudes del analista */
 export function AnalistaSolicitudesPage() {
@@ -26,10 +27,13 @@ export function AnalistaSolicitudesPage() {
 
     return (
         <div>
-            <PageHeader
-                title="Mis Solicitudes de Levantamiento"
-                subtitle="Gestiona tus solicitudes y sube la documentación requerida"
-            />
+            <div className="flex items-center justify-between">
+                <PageHeader
+                    title="Mis Solicitudes de Levantamiento"
+                    subtitle="Gestiona tus solicitudes y sube la documentación requerida"
+                />
+                <BotonDescargarFormato />
+            </div>
 
             {error && (
                 <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
@@ -60,6 +64,21 @@ export function AnalistaSolicitudesPage() {
                 </div>
             )}
         </div>
+    )
+}
+
+/** Botón para descargar formato oficial */
+function BotonDescargarFormato() {
+    return (
+        <a
+            href={FORMATO_PROTESTO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
+        >
+            <Icon name="download" className="h-4 w-4" />
+            Descargar Formato
+        </a>
     )
 }
 
@@ -98,8 +117,7 @@ function SolicitudCard({ solicitud, isExpanded, onToggle, onUploaded }) {
                     </span>
                     <Icon
                         name="chevronDown"
-                        className={`h-4 w-4 text-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''
-                            }`}
+                        className={`h-4 w-4 text-text-muted transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                     />
                 </div>
             </div>
@@ -132,6 +150,8 @@ function SolicitudDetalle({ solicitud, onDescargar, onUploaded }) {
                 } />
             </div>
 
+            <CamposAdicionalesInfo solicitud={solicitud} />
+
             {solicitud.observaciones && (
                 <div className="rounded-lg bg-amber-50 p-3">
                     <p className="text-xs font-medium text-amber-700">Observaciones del Administrador:</p>
@@ -139,42 +159,68 @@ function SolicitudDetalle({ solicitud, onDescargar, onUploaded }) {
                 </div>
             )}
 
-            {solicitud.archivos?.length > 0 && (
-                <div>
-                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                        Archivos subidos ({solicitud.archivos.length})
-                    </p>
-                    <div className="space-y-2">
-                        {solicitud.archivos.map((archivo) => (
-                            <div
-                                key={archivo.id}
-                                className="flex items-center justify-between rounded-lg border border-border p-2"
-                            >
-                                <div>
-                                    <p className="text-sm text-text-primary">{archivo.nombre_archivo}</p>
-                                    <p className="text-xs text-text-muted">
-                                        {formatearTamanoArchivo(archivo.tamano_bytes)}
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => onDescargar(archivo.ruta, archivo.nombre_archivo)}
-                                    className="p-1 text-accent hover:bg-blue-50 rounded"
-                                >
-                                    <Icon name="download" className="h-4 w-4" />
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <ArchivosListado archivos={solicitud.archivos} onDescargar={onDescargar} />
 
             {puedeSubirArchivos && (
-                <UploadArchivoForm
-                    solicitudId={solicitud.id}
-                    archivosExistentes={solicitud.archivos ?? []}
-                    onUploaded={onUploaded}
+                <UploadArchivoForm solicitud={solicitud} onUploaded={onUploaded} />
+            )}
+        </div>
+    )
+}
+
+/** Muestra los campos adicionales del Hito 11 */
+function CamposAdicionalesInfo({ solicitud }) {
+    const hasCampos = solicitud.tipo_comprobante || solicitud.requiere_certificado
+
+    if (!hasCampos) return null
+
+    return (
+        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            {solicitud.tipo_comprobante && (
+                <InfoField
+                    label="Tipo comprobante"
+                    value={solicitud.tipo_comprobante === 'boleta' ? 'Boleta' : 'Factura'}
                 />
             )}
+            <InfoField
+                label="Certificado requerido"
+                value={solicitud.requiere_certificado ? 'Sí' : 'No'}
+            />
+        </div>
+    )
+}
+
+/** Lista de archivos adjuntos */
+function ArchivosListado({ archivos, onDescargar }) {
+    if (!archivos || archivos.length === 0) return null
+
+    return (
+        <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
+                Archivos subidos ({archivos.length})
+            </p>
+            <div className="space-y-2">
+                {archivos.map((archivo) => (
+                    <div
+                        key={archivo.id}
+                        className="flex items-center justify-between rounded-lg border border-border p-2"
+                    >
+                        <div>
+                            <p className="text-sm text-text-primary">{archivo.nombre_archivo}</p>
+                            <p className="text-xs text-text-muted">
+                                {ARCHIVO_TIPO_LABELS[archivo.tipo] ?? archivo.tipo} ·{' '}
+                                {formatearTamanoArchivo(archivo.tamano_bytes)}
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => onDescargar(archivo.ruta, archivo.nombre_archivo)}
+                            className="rounded p-1 text-accent hover:bg-blue-50"
+                        >
+                            <Icon name="download" className="h-4 w-4" />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     )
 }

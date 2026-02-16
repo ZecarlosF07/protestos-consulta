@@ -49,7 +49,7 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
         cargarSolicitudes()
     }, [cargarSolicitudes])
 
-    const crear = useCallback(async (protestoId) => {
+    const crear = useCallback(async (protestoId, camposAdicionales = {}) => {
         const currentUser = userRef.current
         if (!currentUser) return null
 
@@ -61,6 +61,8 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
                 protestoId,
                 usuarioId: currentUser.id,
                 entidadFinancieraId: currentUser.entidad_financiera_id,
+                tipoComprobante: camposAdicionales.tipoComprobante ?? null,
+                requiereCertificado: camposAdicionales.requiereCertificado ?? false,
             })
 
             registrarAuditoria({
@@ -70,6 +72,10 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
                 entidadAfectada: 'solicitudes_levantamiento',
                 entidadAfectadaId: solicitud.id,
                 descripcion: `Solicitud de levantamiento creada para protesto ${protestoId}`,
+                metadata: {
+                    requiere_certificado: camposAdicionales.requiereCertificado ?? false,
+                    tipo_comprobante: camposAdicionales.tipoComprobante ?? null,
+                },
             })
 
             await cargarSolicitudes()

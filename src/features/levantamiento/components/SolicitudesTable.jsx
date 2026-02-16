@@ -55,6 +55,7 @@ const HEADERS = [
     { label: 'Analista', align: 'text-left' },
     { label: 'Entidad', align: 'text-left' },
     { label: 'Estado', align: 'text-center' },
+    { label: 'Cert.', align: 'text-center' },
     { label: 'Fecha', align: 'text-center' },
     { label: '', align: 'text-center' },
 ]
@@ -63,8 +64,7 @@ const HEADERS = [
 function SolicitudRow({ solicitud, index, onClick }) {
     return (
         <tr
-            className={`cursor-pointer transition-colors hover:bg-blue-50/50 ${index % 2 === 0 ? 'bg-white' : 'bg-surface'
-                }`}
+            className={`cursor-pointer transition-colors hover:bg-blue-50/50 ${index % 2 === 0 ? 'bg-white' : 'bg-surface'}`}
             onClick={onClick}
         >
             <td className="whitespace-nowrap px-4 py-3 text-sm text-text-primary">
@@ -86,6 +86,13 @@ function SolicitudRow({ solicitud, index, onClick }) {
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-center">
                 <SolicitudEstadoBadge estado={solicitud.estado} />
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-center">
+                {solicitud.requiere_certificado && (
+                    <span className="inline-flex rounded bg-amber-50 px-1.5 py-0.5 text-xs font-medium text-amber-700" title="Requiere certificado">
+                        Cert
+                    </span>
+                )}
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-center text-sm text-text-secondary">
                 {formatearFechaHora(solicitud.created_at)}

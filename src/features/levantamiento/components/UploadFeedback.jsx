@@ -1,5 +1,5 @@
 import { Icon } from '../../shared/components/atoms/Icon'
-import { ARCHIVO_TIPOS, UPLOAD_CONFIG } from '../types/levantamiento.types'
+import { ARCHIVO_TIPOS, ARCHIVO_TIPO_LABELS, UPLOAD_CONFIG } from '../types/levantamiento.types'
 
 /** Selector de tipo de archivo (comprobante/formato) */
 export function TipoSelector({ tipo, onTipoChange }) {

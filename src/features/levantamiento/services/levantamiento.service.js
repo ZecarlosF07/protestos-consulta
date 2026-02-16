@@ -8,6 +8,8 @@ const SOLICITUD_SELECT = `
     usuario_id,
     entidad_financiera_id,
     observaciones,
+    tipo_comprobante,
+    requiere_certificado,
     estado,
     created_at,
     updated_at,
@@ -25,7 +27,13 @@ const SOLICITUD_SELECT = `
  * Crea una solicitud de levantamiento para un protesto vigente.
  * Valida que el protesto sea vigente y que no exista solicitud activa.
  */
-export async function crearSolicitud({ protestoId, usuarioId, entidadFinancieraId }) {
+export async function crearSolicitud({
+    protestoId,
+    usuarioId,
+    entidadFinancieraId,
+    tipoComprobante = null,
+    requiereCertificado = false,
+}) {
     // Verificar que el protesto está vigente
     const { data: protesto, error: pError } = await supabase
         .from('protestos')
@@ -59,6 +67,8 @@ export async function crearSolicitud({ protestoId, usuarioId, entidadFinancieraI
             protesto_id: protestoId,
             usuario_id: usuarioId,
             entidad_financiera_id: entidadFinancieraId,
+            tipo_comprobante: tipoComprobante,
+            requiere_certificado: requiereCertificado,
             estado: 'registrada',
         })
         .select(SOLICITUD_SELECT)
@@ -71,6 +81,33 @@ export async function crearSolicitud({ protestoId, usuarioId, entidadFinancieraI
         .from('protestos')
         .update({ estado: 'en_proceso' })
         .eq('id', protestoId)
+
+    return data
+}
+
+/**
+ * Actualiza campos adicionales de una solicitud (cuenta_deposito, tipo_comprobante, requiere_certificado).
+ */
+export async function actualizarCamposSolicitud(solicitudId, campos) {
+    const allowedFields = ['tipo_comprobante', 'requiere_certificado']
+    const updates = {}
+
+    for (const field of allowedFields) {
+        if (field in campos) {
+            updates[field] = campos[field]
+        }
+    }
+
+    if (Object.keys(updates).length === 0) return null
+
+    const { data, error } = await supabase
+        .from('solicitudes_levantamiento')
+        .update(updates)
+        .eq('id', solicitudId)
+        .select(SOLICITUD_SELECT)
+        .single()
+
+    if (error) throw new Error(error.message)
 
     return data
 }
