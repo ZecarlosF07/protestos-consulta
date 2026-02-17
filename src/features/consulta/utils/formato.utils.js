@@ -1,4 +1,4 @@
-/** Mapeo de estados de protesto a labels legibles */
+﻿/** Mapeo de estados de protesto a labels legibles */
 const ESTADO_LABELS = {
     vigente: 'Vigente',
     en_proceso: 'En proceso',
@@ -49,6 +49,13 @@ export function formatearMonto(monto) {
  */
 export function formatearFecha(fecha) {
     if (!fecha) return '—'
+
+    // Para columnas DATE (YYYY-MM-DD), evitar new Date() porque aplica timezone del navegador.
+    const soloFecha = String(fecha).match(/^(\d{4})-(\d{2})-(\d{2})$/)
+    if (soloFecha) {
+        const [, year, month, day] = soloFecha
+        return `${day}/${month}/${year}`
+    }
 
     return new Intl.DateTimeFormat('es-PE', {
         day: '2-digit',
