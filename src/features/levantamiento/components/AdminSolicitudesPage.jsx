@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { PageHeader } from '../../shared/components/organisms/PageHeader'
 import { Icon } from '../../shared/components/atoms/Icon'
 import { useSolicitudes } from '../hooks/useSolicitudes'
+import { obtenerSolicitudPorId } from '../services/levantamiento.service'
 import { SolicitudesTable } from './SolicitudesTable'
 import { SolicitudDetailModal } from './SolicitudDetailModal'
 import { FORMATO_PROTESTO_URL } from '../types/levantamiento.types'
@@ -33,7 +34,7 @@ export function AdminSolicitudesPage() {
     const handleRecargar = async () => {
         await recargar()
         if (selectedSolicitud) {
-            const actualizada = solicitudes.find((s) => s.id === selectedSolicitud.id)
+            const actualizada = await obtenerSolicitudPorId(selectedSolicitud.id)
             if (actualizada) setSelectedSolicitud(actualizada)
         }
     }

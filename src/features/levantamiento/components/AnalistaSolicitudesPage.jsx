@@ -8,6 +8,7 @@ import { useSolicitudes } from '../hooks/useSolicitudes'
 import { formatearMonto, formatearFecha } from '../../consulta/utils/formato.utils'
 import { formatearFechaHora, formatearTamanoArchivo } from '../../auditoria/utils/auditoria.utils'
 import { UploadArchivoForm } from './UploadArchivoForm'
+import { CertificadoEmitidoCard } from './CertificadoEmitidoCard'
 import { obtenerUrlDescarga } from '../services/archivos.service'
 import { ARCHIVO_TIPO_LABELS, FORMATO_PROTESTO_URL } from '../types/levantamiento.types'
 
@@ -158,6 +159,8 @@ function SolicitudDetalle({ solicitud, onDescargar, onUploaded }) {
                     <p className="mt-1 text-sm text-amber-900">{solicitud.observaciones}</p>
                 </div>
             )}
+
+            <CertificadoEmitidoCard solicitud={solicitud} />
 
             <ArchivosListado archivos={solicitud.archivos} onDescargar={onDescargar} />
 

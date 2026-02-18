@@ -154,3 +154,19 @@ Historial de cargas de Excel.
 | created_at | timestamp | Fecha de importación |
 | deleted_at | timestamp | Soft delete |
 
+---
+
+## 9. tarifas_levantamiento
+
+Escala de tarifas de levantamiento por rango de monto del protesto. Configurable por el administrador.
+
+| Campo | Tipo | Descripción |
+|-----|-----|-------------|
+| id | uuid (PK) | Identificador |
+| monto_hasta | numeric(12,2) | Límite superior del rango (inclusive). NULL = sin límite ("Mayor de") |
+| tarifa | numeric(12,2) | Tarifa correspondiente al rango |
+| orden | smallint | Orden de evaluación ascendente |
+| created_at | timestamp | Fecha de creación |
+| updated_at | timestamp | Última actualización |
+
+> **Nota:** La columna `tarifa_levantamiento` de la tabla `protestos` se calcula automáticamente mediante un trigger (`trg_calcular_tarifa`) que evalúa el `monto` contra los rangos de esta tabla al insertar o actualizar un protesto.

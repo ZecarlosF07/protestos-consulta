@@ -34,16 +34,15 @@ export async function crearSolicitud({
     tipoComprobante = null,
     requiereCertificado = false,
 }) {
-    // Verificar que el protesto está vigente
-    const { data: protesto, error: pError } = await supabase
-        .from('protestos')
-        .select('id, estado')
-        .eq('id', protestoId)
-        .is('deleted_at', null)
-        .single()
+    // Verificar que el protesto está vigente (vía RPC, el analista no tiene SELECT directo)
+    const { data: verificacion, error: vError } = await supabase.rpc(
+        'verificar_protesto_vigente',
+        { p_protesto_id: protestoId }
+    )
 
-    if (pError) throw new Error('No se encontró el protesto')
-    if (protesto.estado !== 'vigente') {
+    if (vError) throw new Error('Error verificando el protesto')
+    if (!verificacion?.encontrado) throw new Error('No se encontró el protesto')
+    if (!verificacion?.vigente) {
         throw new Error('Solo se pueden solicitar levantamientos para protestos vigentes')
     }
 
@@ -76,11 +75,11 @@ export async function crearSolicitud({
 
     if (error) throw new Error(error.message)
 
-    // Cambiar estado del protesto a en_proceso
-    await supabase
-        .from('protestos')
-        .update({ estado: 'en_proceso' })
-        .eq('id', protestoId)
+    // Cambiar estado del protesto a en_proceso (vía RPC)
+    await supabase.rpc('cambiar_estado_protesto_solicitud', {
+        p_protesto_id: protestoId,
+        p_nuevo_estado: 'en_proceso',
+    })
 
     return data
 }

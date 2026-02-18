@@ -16,17 +16,15 @@ const PROTESTO_SELECT_FIELDS = `
 `
 
 /**
- * Busca protestos por número de documento.
- * Solo retorna protestos activos (no eliminados).
+ * Busca protestos por número de documento usando función RPC.
+ * El analista no tiene acceso directo a la tabla protestos;
+ * la función SECURITY DEFINER filtra por documento.
  */
 export async function buscarProtestos(numeroDocumento, tipoDocumento) {
-    const { data, error } = await supabase
-        .from('protestos')
-        .select(PROTESTO_SELECT_FIELDS)
-        .eq('numero_documento', numeroDocumento)
-        .eq('tipo_documento', tipoDocumento)
-        .is('deleted_at', null)
-        .order('fecha_protesto', { ascending: false })
+    const { data, error } = await supabase.rpc('buscar_protestos_por_documento', {
+        p_numero_documento: numeroDocumento,
+        p_tipo_documento: tipoDocumento,
+    })
 
     if (error) {
         throw new Error(error.message)
