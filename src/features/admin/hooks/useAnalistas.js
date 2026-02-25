@@ -101,8 +101,8 @@ export function useAnalistas() {
         await cargarDatos()
     }, [user, cargarDatos])
 
-    const resetearPassword = useCallback(async (analista) => {
-        await resetearPasswordAnalista(analista.email)
+    const resetearPassword = useCallback(async (analista, newPassword) => {
+        await resetearPasswordAnalista(analista.id, newPassword)
         await registrarAuditoria({
             usuarioId: user.id,
             accion: 'RESETEAR_PASSWORD',

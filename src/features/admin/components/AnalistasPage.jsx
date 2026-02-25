@@ -7,6 +7,7 @@ import { useAnalistas } from '../hooks/useAnalistas'
 import { AnalistasFilters } from './AnalistasFilters'
 import { AnalistasTable } from './AnalistasTable'
 import { AnalistaFormModal } from './AnalistaFormModal'
+import { ResetPasswordModal } from './ResetPasswordModal'
 
 /** Página de gestión de analistas (Admin) */
 export function AnalistasPage() {
@@ -20,6 +21,7 @@ export function AnalistasPage() {
     const [showForm, setShowForm] = useState(false)
     const [editingAnalista, setEditingAnalista] = useState(null)
     const [confirmAction, setConfirmAction] = useState(null)
+    const [resetTarget, setResetTarget] = useState(null)
     const [actionError, setActionError] = useState(null)
 
     const handleEditar = (analista) => {
@@ -56,13 +58,12 @@ export function AnalistasPage() {
     }
 
     const handleResetPassword = (analista) => {
-        setConfirmAction({
-            title: 'Resetear contraseña',
-            message: `Se enviará un email de recuperación a ${analista.email}`,
-            confirmLabel: 'Enviar email',
-            variant: 'warning',
-            execute: async () => await resetearPassword(analista),
-        })
+        setResetTarget(analista)
+    }
+
+    const handleResetSubmit = async (analista, newPassword) => {
+        setActionError(null)
+        await resetearPassword(analista, newPassword)
     }
 
     const executeConfirmAction = async () => {
@@ -149,6 +150,14 @@ export function AnalistasPage() {
                     variant={confirmAction.variant}
                     onConfirm={executeConfirmAction}
                     onClose={() => setConfirmAction(null)}
+                />
+            )}
+
+            {resetTarget && (
+                <ResetPasswordModal
+                    analista={resetTarget}
+                    onSubmit={handleResetSubmit}
+                    onClose={() => setResetTarget(null)}
                 />
             )}
         </div>

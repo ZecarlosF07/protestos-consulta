@@ -13,6 +13,7 @@ import { AnalystLayout } from '../features/analyst/components/AnalystLayout'
 import { LoginPage } from '../features/auth/components/LoginPage'
 import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { ConsultaProtestosPage } from '../features/consulta/components/ConsultaProtestosPage'
+import { HistorialConsultasPage } from '../features/consulta/components/HistorialConsultasPage'
 import { AuditDashboardPage } from '../features/auditoria/components/AuditDashboardPage'
 import { AdminSolicitudesPage } from '../features/levantamiento/components/AdminSolicitudesPage'
 import { AnalistaSolicitudesPage } from '../features/levantamiento/components/AnalistaSolicitudesPage'
@@ -59,7 +60,7 @@ export function Router() {
                     <Route index element={<AnalystDashboard />} />
                     <Route path="consulta" element={<ConsultaProtestosPage />} />
                     <Route path="solicitudes" element={<AnalistaSolicitudesPage />} />
-                    <Route path="historial" element={<PlaceholderPage title="Historial de Consultas" />} />
+                    <Route path="historial" element={<HistorialConsultasPage />} />
                 </Route>
 
                 {/* Ruta 404 */}
@@ -69,14 +70,4 @@ export function Router() {
     )
 }
 
-/** Componente placeholder para páginas de hitos posteriores */
-function PlaceholderPage({ title }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-20">
-            <h2 className="text-lg font-semibold text-text-primary">{title}</h2>
-            <p className="mt-2 text-sm text-text-muted">
-                Este módulo será implementado en un hito posterior.
-            </p>
-        </div>
-    )
-}
+
