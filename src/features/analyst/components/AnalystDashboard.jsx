@@ -1,11 +1,31 @@
-import { useEffect, useState } from 'react'
-
 import { useAuth } from '../../auth/hooks/useAuth'
+import { ROUTES } from '../../../config/routes'
 import { PageHeader } from '../../shared/components/organisms/PageHeader'
 import { StatCard } from '../../shared/components/molecules/StatCard'
-import { Card } from '../../shared/components/atoms/Card'
 import { Icon } from '../../shared/components/atoms/Icon'
-import { supabase } from '../../../services/supabase/client'
+import { useAnalystStats } from '../hooks/useAnalystStats'
+import { ModuleCard } from './ModuleCard'
+
+const MODULES = [
+    {
+        title: 'Consulta de Protestos',
+        description: 'Busque por DNI o RUC para verificar protestos registrados en el sistema.',
+        icon: 'search',
+        to: ROUTES.ANALYST_SEARCH,
+    },
+    {
+        title: 'Solicitudes de Levantamiento',
+        description: 'Gestione sus solicitudes activas y suba la documentación requerida.',
+        icon: 'clipboard',
+        to: ROUTES.ANALYST_SOLICITUDES,
+    },
+    {
+        title: 'Historial de Consultas',
+        description: 'Revise el registro completo de todas las búsquedas realizadas.',
+        icon: 'history',
+        to: ROUTES.ANALYST_HISTORY,
+    },
+]
 
 export function AnalystDashboard() {
     const { user } = useAuth()
@@ -16,7 +36,7 @@ export function AnalystDashboard() {
         ? `${user?.nombre_completo} — ${entityName}`
         : user?.nombre_completo
 
-    const cards = [
+    const statCards = [
         {
             label: 'Consultas realizadas',
             value: isLoading ? '...' : stats.consultas.toLocaleString('es-PE'),
@@ -37,7 +57,7 @@ export function AnalystDashboard() {
             />
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {cards.map(({ label, value, icon }) => (
+                {statCards.map(({ label, value, icon }) => (
                     <StatCard
                         key={label}
                         label={label}
@@ -48,55 +68,15 @@ export function AnalystDashboard() {
             </div>
 
             <div className="mt-8">
-                <Card>
-                    <h3 className="text-sm font-semibold text-text-primary">
-                        Módulos disponibles
-                    </h3>
-                    <p className="mt-3 text-sm text-text-muted">
-                        Usa el menú lateral para consultar protestos, gestionar solicitudes de levantamiento o ver tu historial.
-                    </p>
-                </Card>
+                <h3 className="mb-3 text-sm font-semibold text-text-primary">
+                    Acceso rápido
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {MODULES.map((mod) => (
+                        <ModuleCard key={mod.to} {...mod} />
+                    ))}
+                </div>
             </div>
         </div>
     )
-}
-
-/** Hook interno para cargar stats del analista */
-function useAnalystStats(userId) {
-    const [stats, setStats] = useState({ consultas: 0, solicitudesActivas: 0 })
-    const [isLoading, setIsLoading] = useState(true)
-
-    useEffect(() => {
-        if (!userId) return
-
-        async function load() {
-            try {
-                const [consultasRes, solicitudesRes] = await Promise.all([
-                    supabase
-                        .from('consultas')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('usuario_id', userId),
-                    supabase
-                        .from('solicitudes_levantamiento')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('usuario_id', userId)
-                        .is('deleted_at', null)
-                        .in('estado', ['registrada', 'en_revision']),
-                ])
-
-                setStats({
-                    consultas: consultasRes.count ?? 0,
-                    solicitudesActivas: solicitudesRes.count ?? 0,
-                })
-            } catch (err) {
-                console.error('Error cargando stats del analista:', err.message)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        load()
-    }, [userId])
-
-    return { stats, isLoading }
 }
