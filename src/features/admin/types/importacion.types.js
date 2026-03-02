@@ -28,6 +28,7 @@
  * @property {number} monto
  * @property {string} fecha_protesto
  * @property {number|null} tarifa_levantamiento
+ * @property {string|null} tipo_valor
  */
 
 export const IMPORTACION_ESTADO = {

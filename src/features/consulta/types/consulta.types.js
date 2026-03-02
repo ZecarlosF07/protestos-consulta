@@ -10,6 +10,7 @@
  * @property {number} monto
  * @property {string} fecha_protesto
  * @property {number|null} tarifa_levantamiento
+ * @property {string|null} tipo_valor
  * @property {'vigente'|'en_proceso'|'levantado'} estado
  */
 

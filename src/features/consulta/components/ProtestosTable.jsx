@@ -11,6 +11,9 @@ function ProtestoRow({ protesto, index, onSolicitar, isLoadingSolicitud }) {
                 {protesto.nombre_persona}
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary">
+                {protesto.tipo_valor || '—'}
+            </td>
+            <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary">
                 {protesto.entidad_financiadora}
             </td>
             <td className="whitespace-nowrap px-4 py-3 text-sm text-text-secondary">
@@ -44,6 +47,7 @@ function ProtestoRow({ protesto, index, onSolicitar, isLoadingSolicitud }) {
 /** Encabezados de la tabla */
 const HEADERS = [
     { label: 'Persona', align: 'text-left' },
+    { label: 'Tipo valor', align: 'text-left' },
     { label: 'Entidad financiadora', align: 'text-left' },
     { label: 'Entidad fuente', align: 'text-left' },
     { label: 'Monto', align: 'text-right' },

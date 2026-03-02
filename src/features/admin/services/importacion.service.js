@@ -46,6 +46,7 @@ export async function insertarProtestoDesdeImportacion(protesto) {
         monto: protesto.monto,
         fecha_protesto: protesto.fecha_protesto,
         tarifa_levantamiento: protesto.tarifa_levantamiento ?? null,
+        tipo_valor: protesto.tipo_valor ?? null,
         importacion_id: protesto.importacion_id ?? null,
         estado: protesto.estado ?? 'vigente',
     }
@@ -71,7 +72,7 @@ export async function obtenerSecuenciasExistentes(secuencias) {
             .is('deleted_at', null)
 
         if (error) throw new Error(error.message)
-        ;(data ?? []).forEach(row => existentes.add(row.secuencia))
+            ; (data ?? []).forEach(row => existentes.add(row.secuencia))
     }
     return existentes
 }

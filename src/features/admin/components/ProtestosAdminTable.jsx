@@ -20,6 +20,7 @@ export function ProtestosAdminTable({ protestos, onVerHistorial, onCambiarEstado
                         <th className="px-4 py-3 font-medium text-text-secondary">Secuencia</th>
                         <th className="px-4 py-3 font-medium text-text-secondary">Documento</th>
                         <th className="px-4 py-3 font-medium text-text-secondary">Nombre</th>
+                        <th className="px-4 py-3 font-medium text-text-secondary">TV</th>
                         <th className="px-4 py-3 font-medium text-text-secondary">Entidad</th>
                         <th className="px-4 py-3 font-medium text-text-secondary">Monto</th>
                         <th className="px-4 py-3 font-medium text-text-secondary">Fecha</th>
@@ -50,6 +51,7 @@ function ProtestoRow({ protesto, onVerHistorial, onCambiarEstado }) {
             </td>
             <td className="px-4 py-3 text-text-primary">{protesto.numero_documento}</td>
             <td className="px-4 py-3 text-text-primary">{protesto.nombre_persona}</td>
+            <td className="px-4 py-3 text-text-secondary">{protesto.tipo_valor || '—'}</td>
             <td className="px-4 py-3 text-text-secondary">{protesto.entidad_financiadora}</td>
             <td className="px-4 py-3 font-medium text-text-primary">
                 {formatearMonto(protesto.monto)}

@@ -62,6 +62,7 @@ Registro central de protestos importados.
 | monto | numeric | Monto del protesto |
 | fecha_protesto | date | Fecha del protesto |
 | tarifa_levantamiento | numeric | Tarifa vigente |
+| tipo_valor | varchar | Tipo de valor: Letra, Pagaré, etc. |
 | estado | varchar | Vigente / En proceso / Levantado |
 | created_at | timestamp | Fecha de registro |
 | updated_at | timestamp | Última actualización |

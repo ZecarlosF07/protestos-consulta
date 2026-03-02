@@ -12,6 +12,7 @@ const PROTESTO_SELECT_FIELDS = `
     monto,
     fecha_protesto,
     tarifa_levantamiento,
+    tipo_valor,
     estado
 `
 

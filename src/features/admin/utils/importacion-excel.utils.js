@@ -8,9 +8,10 @@ const HEADER_ALIASES = {
     entidad_financiadora: ['entidad_financiadora', 'girador'],
     entidad_fuente: ['entidad_fuente', 'ef', 'entidad_origen'],
     monto: ['monto', 'importe'],
-    fecha_protesto: ['fecha_protesto', 'fecha'],
+    fecha_protesto: ['fecha_protesto', 'fecha', 'feccha_protesto'],
     nombre_persona: ['nombre_persona', 'nombre', 'razon_social', 'aceptante'],
     tarifa_levantamiento: ['tarifa_levantamiento', 'tarifa'],
+    tipo_valor: ['tipo_valor', 'tv'],
     idsec: ['idsec'],
     tpg: ['tpg'],
 }
@@ -158,6 +159,8 @@ export async function parsearExcelProtestos(filePayload) {
         }
 
         seenSecuencias.add(secuencia)
+        const tipoValor = String(row.tipo_valor ?? '').trim() || null
+
         validRows.push({
             fila,
             secuencia,
@@ -169,6 +172,7 @@ export async function parsearExcelProtestos(filePayload) {
             monto,
             fecha_protesto: fecha,
             tarifa_levantamiento: row.tarifa_levantamiento ? parseMonto(row.tarifa_levantamiento) : null,
+            tipo_valor: tipoValor,
         })
     })
 

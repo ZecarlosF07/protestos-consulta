@@ -4,7 +4,7 @@ import { PAGE_SIZE, PROTESTO_TRANSITIONS } from '../types/admin.types'
 const PROTESTO_SELECT = `
     id, secuencia, tipo_documento, numero_documento,
     nombre_persona, entidad_financiadora, entidad_fuente,
-    monto, fecha_protesto, tarifa_levantamiento,
+    monto, fecha_protesto, tarifa_levantamiento, tipo_valor,
     estado, created_at, updated_at
 `
 
