@@ -15,6 +15,8 @@ import { ProtectedRoute } from '../features/auth/components/ProtectedRoute'
 import { ConsultaProtestosPage } from '../features/consulta/components/ConsultaProtestosPage'
 import { HistorialConsultasPage } from '../features/consulta/components/HistorialConsultasPage'
 import { AuditDashboardPage } from '../features/auditoria/components/AuditDashboardPage'
+import { FormatosPage } from '../features/formatos/components/FormatosPage'
+import { FormatoHistorialPage } from '../features/formatos/components/FormatoHistorialPage'
 import { AdminSolicitudesPage } from '../features/levantamiento/components/AdminSolicitudesPage'
 import { AnalistaSolicitudesPage } from '../features/levantamiento/components/AnalistaSolicitudesPage'
 import { HomeRedirect } from '../features/shared/components/HomeRedirect'
@@ -46,6 +48,8 @@ export function Router() {
                     <Route path="importar" element={<ImportarProtestosPage />} />
                     <Route path="auditoria" element={<AuditDashboardPage />} />
                     <Route path="solicitudes" element={<AdminSolicitudesPage />} />
+                    <Route path="formatos" element={<FormatosPage />} />
+                    <Route path="formatos/:formatoId" element={<FormatoHistorialPage />} />
                 </Route>
 
                 {/* Rutas del Analista */}
@@ -69,5 +73,3 @@ export function Router() {
         </BrowserRouter>
     )
 }
-
-

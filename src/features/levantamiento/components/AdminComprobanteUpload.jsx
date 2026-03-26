@@ -42,7 +42,18 @@ export function AdminComprobanteUpload({ solicitud, onUploaded }) {
                 })
                 setIsReplacing(false)
             } else {
-                await subir(file, solicitud.id, ARCHIVO_TIPOS.BOLETA_FACTURA)
+                const nuevo = await subir(file, solicitud.id, ARCHIVO_TIPOS.BOLETA_FACTURA)
+                if (nuevo) {
+                    registrarAuditoria({
+                        usuarioId: user.id,
+                        entidadFinancieraId: user.entidad_financiera_id,
+                        accion: 'COMPROBANTE_SUBIDO',
+                        entidadAfectada: 'archivos',
+                        entidadAfectadaId: nuevo.id,
+                        descripcion: `${tipoLabel} adjuntada en solicitud ${solicitud.id}`,
+                        metadata: { tipo: ARCHIVO_TIPOS.BOLETA_FACTURA, nombre: file.name },
+                    })
+                }
             }
             setFile(null)
             onUploaded?.()

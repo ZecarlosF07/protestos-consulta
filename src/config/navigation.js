@@ -7,6 +7,7 @@ export const ADMIN_NAV_ITEMS = [
     { label: 'Entidades', path: ROUTES.ADMIN_ENTITIES, icon: 'building' },
     { label: 'Protestos', path: ROUTES.ADMIN_PROTESTS, icon: 'file' },
     { label: 'Solicitudes', path: ROUTES.ADMIN_SOLICITUDES, icon: 'clipboard' },
+    { label: 'Formatos', path: ROUTES.ADMIN_FORMATOS, icon: 'document' },
     { label: 'Auditoría', path: ROUTES.ADMIN_AUDIT, icon: 'shield' },
     { label: 'Importar', path: ROUTES.ADMIN_IMPORT, icon: 'upload' },
 ]

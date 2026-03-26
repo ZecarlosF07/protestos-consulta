@@ -9,6 +9,7 @@ export const ROUTES = {
     ADMIN_ENTITIES: '/admin/entidades',
     ADMIN_AUDIT: '/admin/auditoria',
     ADMIN_SOLICITUDES: '/admin/solicitudes',
+    ADMIN_FORMATOS: '/admin/formatos',
     ANALYST_DASHBOARD: '/analista',
     ANALYST_SEARCH: '/analista/consulta',
     ANALYST_HISTORY: '/analista/historial',

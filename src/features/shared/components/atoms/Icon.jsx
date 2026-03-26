@@ -30,6 +30,7 @@ const ICON_PATHS = {
     chevronLeft: 'M15 19l-7-7 7-7',
     chevronRight: 'M9 5l7 7-7 7',
     building: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4',
+    document: 'M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z',
 }
 
 /** Ícono SVG basado en Heroicons outline */
