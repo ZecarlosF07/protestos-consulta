@@ -99,6 +99,35 @@ export async function obtenerUrlDescarga(ruta) {
 }
 
 /**
+ * Reemplaza un archivo existente: marca el anterior como eliminado y sube el nuevo.
+ * @param {File} file - Nuevo archivo
+ * @param {string} solicitudId - ID de la solicitud
+ * @param {string} tipo - Tipo de archivo
+ * @returns {Promise<Object>} Nuevo registro de archivo
+ */
+export async function reemplazarArchivo(file, solicitudId, tipo) {
+    // Soft-delete del archivo anterior
+    const { data: existentes } = await supabase
+        .from('archivos')
+        .select('id, ruta')
+        .eq('solicitud_id', solicitudId)
+        .eq('tipo', tipo)
+        .is('deleted_at', null)
+
+    if (existentes?.length > 0) {
+        for (const archivo of existentes) {
+            await supabase
+                .from('archivos')
+                .update({ deleted_at: new Date().toISOString() })
+                .eq('id', archivo.id)
+        }
+    }
+
+    // Subir nuevo archivo
+    return subirArchivo(file, solicitudId, tipo)
+}
+
+/**
  * Interpreta errores de Supabase Storage y devuelve mensajes legibles.
  */
 function interpretarErrorStorage(error) {

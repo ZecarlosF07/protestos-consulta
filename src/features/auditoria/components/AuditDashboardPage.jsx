@@ -4,6 +4,7 @@ import { AuditMetricsGrid } from './AuditMetricsGrid'
 import { ConsultasPorEntidadTable } from './ConsultasPorEntidadTable'
 import { TopAnalistasTable } from './TopAnalistasTable'
 import { AuditoriaRecenteList } from './AuditoriaRecenteList'
+import { ExportarSolicitudesButton } from './ExportarSolicitudesButton'
 import { Icon } from '../../shared/components/atoms/Icon'
 
 /** Página principal del dashboard de auditoría (Admin) */
@@ -34,13 +35,16 @@ export function AuditDashboardPage() {
                     title="Dashboard de Auditoría"
                     subtitle="Métricas globales de uso y trazabilidad del sistema"
                 />
-                <button
-                    onClick={recargar}
-                    className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
-                >
-                    <Icon name="refresh" className="h-4 w-4" />
-                    Actualizar
-                </button>
+                <div className="flex items-center gap-2">
+                    <ExportarSolicitudesButton />
+                    <button
+                        onClick={recargar}
+                        className="flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-text-secondary transition-colors hover:bg-surface-dark"
+                    >
+                        <Icon name="refresh" className="h-4 w-4" />
+                        Actualizar
+                    </button>
+                </div>
             </div>
 
             {error && (

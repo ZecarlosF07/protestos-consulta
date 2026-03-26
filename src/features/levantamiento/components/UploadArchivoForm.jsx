@@ -61,7 +61,7 @@ export function UploadArchivoForm({ solicitud, onUploaded }) {
     return (
         <div className="space-y-3">
             <h4 className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                Documentos Requeridos
+                Formato de solicitud (Adjuntar DNI)
             </h4>
 
             <CuentaDepositoInfo />

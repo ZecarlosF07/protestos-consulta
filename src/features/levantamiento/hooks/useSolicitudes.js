@@ -63,6 +63,7 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
                 entidadFinancieraId: currentUser.entidad_financiera_id,
                 tipoComprobante: camposAdicionales.tipoComprobante ?? null,
                 requiereCertificado: camposAdicionales.requiereCertificado ?? false,
+                datosComprobante: camposAdicionales.datosComprobante ?? {},
             })
 
             registrarAuditoria({
@@ -75,6 +76,7 @@ export function useSolicitudes({ modo = 'analista' } = {}) {
                 metadata: {
                     requiere_certificado: camposAdicionales.requiereCertificado ?? false,
                     tipo_comprobante: camposAdicionales.tipoComprobante ?? null,
+                    datos_comprobante: camposAdicionales.datosComprobante ?? {},
                 },
             })
 

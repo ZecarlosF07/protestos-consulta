@@ -5,10 +5,14 @@ import { Icon } from '../../shared/components/atoms/Icon'
 import { SolicitudEstadoBadge } from '../../shared/components/atoms/SolicitudEstadoBadge'
 import { EstadoBadge } from '../../consulta/components/EstadoBadge'
 import { formatearMonto, formatearFecha } from '../../consulta/utils/formato.utils'
-import { formatearFechaHora, formatearTamanoArchivo } from '../../auditoria/utils/auditoria.utils'
-import { SOLICITUD_TRANSITIONS, ARCHIVO_TIPO_LABELS, ARCHIVO_TIPOS } from '../types/levantamiento.types'
+import { formatearFechaHora } from '../../auditoria/utils/auditoria.utils'
+import { SOLICITUD_TRANSITIONS } from '../types/levantamiento.types'
 import { obtenerUrlDescarga } from '../services/archivos.service'
 import { AdminCertificadoUpload } from './AdminCertificadoUpload'
+import { AdminComprobanteUpload } from './AdminComprobanteUpload'
+import { ArchivosSection } from './ArchivosSection'
+import { AccionesAdmin } from './AccionesAdmin'
+import { CamposAdicionalesAdmin } from './CamposAdicionalesAdmin'
 
 /** Modal de detalle de una solicitud de levantamiento (Admin) */
 export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, onRecargar, isLoading }) {
@@ -33,17 +37,13 @@ export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, onRe
                     <ProtestoInfo protesto={solicitud.protesto} />
                     <SolicitudInfo solicitud={solicitud} />
                     <CamposAdicionalesAdmin solicitud={solicitud} />
-                    <ArchivosSection
-                        archivos={solicitud.archivos}
-                        onDescargar={handleDescargar}
-                    />
+                    <ArchivosSection archivos={solicitud.archivos} onDescargar={handleDescargar} />
 
                     {solicitud.requiere_certificado && (
-                        <AdminCertificadoUpload
-                            solicitud={solicitud}
-                            onUploaded={onRecargar}
-                        />
+                        <AdminCertificadoUpload solicitud={solicitud} onUploaded={onRecargar} />
                     )}
+
+                    <AdminComprobanteUpload solicitud={solicitud} onUploaded={onRecargar} />
 
                     {transicionesPermitidas.length > 0 && (
                         <AccionesAdmin
@@ -65,13 +65,8 @@ export function SolicitudDetailModal({ solicitud, onClose, onCambiarEstado, onRe
 function ModalHeader({ onClose }) {
     return (
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
-            <h3 className="text-lg font-semibold text-text-primary">
-                Detalle de Solicitud
-            </h3>
-            <button
-                onClick={onClose}
-                className="rounded-lg p-1 text-text-muted hover:bg-surface-dark"
-            >
+            <h3 className="text-lg font-semibold text-text-primary">Detalle de Solicitud</h3>
+            <button onClick={onClose} className="rounded-lg p-1 text-text-muted hover:bg-surface-dark">
                 <Icon name="close" className="h-5 w-5" />
             </button>
         </div>
@@ -109,128 +104,10 @@ function SolicitudInfo({ solicitud }) {
             <InfoField label="Entidad" value={solicitud.entidad_financiera?.nombre} />
             <InfoField label="Fecha solicitud" value={formatearFechaHora(solicitud.created_at)} />
             <div className="flex items-center gap-2">
-                <span className="text-text-muted">Estado:</span>
-                <SolicitudEstadoBadge estado={solicitud.estado} />
+                <span className="text-text-muted">Estado:</span> <SolicitudEstadoBadge estado={solicitud.estado} />
             </div>
         </div>
     )
-}
-
-/** Muestra campos adicionales del Hito 11 en vista admin */
-function CamposAdicionalesAdmin({ solicitud }) {
-    const hasCampos = solicitud.tipo_comprobante || solicitud.requiere_certificado
-
-    if (!hasCampos) return null
-
-    return (
-        <Card>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                Información Adicional
-            </h4>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-                {solicitud.tipo_comprobante && (
-                    <InfoField
-                        label="Tipo comprobante"
-                        value={solicitud.tipo_comprobante === 'boleta' ? 'Boleta' : 'Factura'}
-                    />
-                )}
-                <InfoField
-                    label="Certificado requerido"
-                    value={solicitud.requiere_certificado ? 'Sí (S/ 30)' : 'No'}
-                />
-            </div>
-        </Card>
-    )
-}
-
-function ArchivosSection({ archivos, onDescargar }) {
-    if (!archivos || archivos.length === 0) {
-        return (
-            <Card>
-                <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                    Documentos Adjuntos
-                </h4>
-                <p className="text-sm text-text-muted">
-                    No se han adjuntado documentos aún
-                </p>
-            </Card>
-        )
-    }
-
-    return (
-        <Card>
-            <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                Documentos Adjuntos ({archivos.length})
-            </h4>
-            <div className="space-y-2">
-                {archivos.map((archivo) => (
-                    <div
-                        key={archivo.id}
-                        className="flex items-center justify-between rounded-lg border border-border p-3"
-                    >
-                        <div>
-                            <p className="text-sm font-medium text-text-primary">
-                                {archivo.nombre_archivo}
-                            </p>
-                            <p className="text-xs text-text-muted">
-                                {ARCHIVO_TIPO_LABELS[archivo.tipo] ?? archivo.tipo} ·{' '}
-                                {formatearTamanoArchivo(archivo.tamano_bytes)}
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => onDescargar(archivo.ruta, archivo.nombre_archivo)}
-                            className="rounded-lg p-2 text-accent transition-colors hover:bg-blue-50"
-                        >
-                            <Icon name="download" className="h-4 w-4" />
-                        </button>
-                    </div>
-                ))}
-            </div>
-        </Card>
-    )
-}
-
-function AccionesAdmin({ transiciones, observaciones, onObservacionesChange, onAccion, isLoading }) {
-    return (
-        <div className="space-y-3 border-t border-border pt-4">
-            <label className="block">
-                <span className="text-xs font-semibold uppercase tracking-wide text-text-secondary">
-                    Observaciones del Administrador
-                </span>
-                <textarea
-                    value={observaciones}
-                    onChange={(e) => onObservacionesChange(e.target.value)}
-                    rows={3}
-                    className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                    placeholder="Notas o feedback para el analista..."
-                />
-            </label>
-            <div className="flex gap-2">
-                {transiciones.map((estado) => (
-                    <button
-                        key={estado}
-                        onClick={() => onAccion(estado)}
-                        disabled={isLoading}
-                        className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${ACCION_STYLES[estado] ?? 'bg-gray-500 hover:bg-gray-600'}`}
-                    >
-                        {isLoading ? 'Procesando...' : ACCION_LABELS[estado]}
-                    </button>
-                ))}
-            </div>
-        </div>
-    )
-}
-
-const ACCION_LABELS = {
-    en_revision: 'Pasar a Revisión',
-    aprobada: 'Aprobar Solicitud',
-    rechazada: 'Rechazar Solicitud',
-}
-
-const ACCION_STYLES = {
-    en_revision: 'bg-amber-500 hover:bg-amber-600',
-    aprobada: 'bg-emerald-500 hover:bg-emerald-600',
-    rechazada: 'bg-red-500 hover:bg-red-600',
 }
 
 function InfoField({ label, value }) {

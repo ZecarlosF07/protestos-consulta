@@ -15,6 +15,9 @@
  * @property {string} observaciones
  * @property {TipoComprobante} tipo_comprobante
  * @property {boolean} requiere_certificado
+ * @property {string} [comprobante_nrodocumento]
+ * @property {string} [comprobante_datos]
+ * @property {string} [comprobante_telefono]
  * @property {EstadoSolicitud} estado
  * @property {string} created_at
  * @property {string} updated_at
@@ -36,7 +39,7 @@
  */
 
 /**
- * @typedef {'comprobante_pago'|'formato_firmado'|'carta_no_adeudo'|'comprobante_certificado'|'certificado_emitido'} ArchivoTipo
+ * @typedef {'comprobante_pago'|'formato_firmado'|'carta_no_adeudo'|'comprobante_certificado'|'certificado_emitido'|'boleta_factura_adjunto'} ArchivoTipo
  */
 
 /**
@@ -46,6 +49,7 @@
  * @property {string} entidadFinancieraId
  * @property {TipoComprobante} [tipoComprobante]
  * @property {boolean} [requiereCertificado]
+ * @property {Object} [datosComprobante] — datos condicionales del tipo de comprobante
  */
 
 /** Transiciones válidas de estado de solicitud */
@@ -79,6 +83,7 @@ export const ARCHIVO_TIPOS = {
     CARTA_NO_ADEUDO: 'carta_no_adeudo',
     COMPROBANTE_CERTIFICADO: 'comprobante_certificado',
     CERTIFICADO_EMITIDO: 'certificado_emitido',
+    BOLETA_FACTURA: 'boleta_factura_adjunto',
 }
 
 /** Labels legibles para tipos de archivo */
@@ -88,6 +93,7 @@ export const ARCHIVO_TIPO_LABELS = {
     carta_no_adeudo: 'Carta de No Adeudo',
     comprobante_certificado: 'Comprobante Certificado (S/ 30)',
     certificado_emitido: 'Certificado de Título Regularizado',
+    boleta_factura_adjunto: 'Boleta / Factura Adjunta',
 }
 
 /** Tipos de comprobante fiscal */

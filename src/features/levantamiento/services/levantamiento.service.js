@@ -10,6 +10,9 @@ const SOLICITUD_SELECT = `
     observaciones,
     tipo_comprobante,
     requiere_certificado,
+    comprobante_nrodocumento,
+    comprobante_datos,
+    comprobante_telefono,
     estado,
     created_at,
     updated_at,
@@ -33,6 +36,7 @@ export async function crearSolicitud({
     entidadFinancieraId,
     tipoComprobante = null,
     requiereCertificado = false,
+    datosComprobante = {},
 }) {
     // Verificar que el protesto está vigente (vía RPC, el analista no tiene SELECT directo)
     const { data: verificacion, error: vError } = await supabase.rpc(
@@ -60,16 +64,25 @@ export async function crearSolicitud({
     }
 
     // Crear solicitud
+    const insertPayload = {
+        protesto_id: protestoId,
+        usuario_id: usuarioId,
+        entidad_financiera_id: entidadFinancieraId,
+        tipo_comprobante: tipoComprobante,
+        requiere_certificado: requiereCertificado,
+        estado: 'registrada',
+    }
+
+    // Agregar campos unificados del comprobante
+    if (tipoComprobante) {
+        insertPayload.comprobante_nrodocumento = datosComprobante.nroDocumento ?? null
+        insertPayload.comprobante_datos = datosComprobante.datos ?? null
+        insertPayload.comprobante_telefono = datosComprobante.telefono ?? null
+    }
+
     const { data, error } = await supabase
         .from('solicitudes_levantamiento')
-        .insert({
-            protesto_id: protestoId,
-            usuario_id: usuarioId,
-            entidad_financiera_id: entidadFinancieraId,
-            tipo_comprobante: tipoComprobante,
-            requiere_certificado: requiereCertificado,
-            estado: 'registrada',
-        })
+        .insert(insertPayload)
         .select(SOLICITUD_SELECT)
         .single()
 
@@ -88,7 +101,13 @@ export async function crearSolicitud({
  * Actualiza campos adicionales de una solicitud (cuenta_deposito, tipo_comprobante, requiere_certificado).
  */
 export async function actualizarCamposSolicitud(solicitudId, campos) {
-    const allowedFields = ['tipo_comprobante', 'requiere_certificado']
+    const allowedFields = [
+        'tipo_comprobante',
+        'requiere_certificado',
+        'comprobante_nrodocumento',
+        'comprobante_datos',
+        'comprobante_telefono',
+    ]
     const updates = {}
 
     for (const field of allowedFields) {
