@@ -4,36 +4,38 @@ import { useAuth } from '../../auth/hooks/useAuth'
 import { registrarAuditoria } from '../../../services/supabase/audit.service'
 import {
     cambiarEstadoProtestoAdmin,
-    obtenerEntidadesFinanciadoras,
     obtenerHistorialProtesto,
     obtenerProtestos,
 } from '../services/protestos.service'
+
+const FILTER_DEBOUNCE_MS = 350
+const INITIAL_FILTERS = {
+    estado: '',
+    entidad: '',
+    fechaDesde: '',
+    fechaHasta: '',
+    busquedaTipo: 'secuencia',
+    busqueda: '',
+}
 
 /** Hook para gestión administrativa de protestos */
 export function useProtestosAdmin() {
     const { user } = useAuth()
     const [protestos, setProtestos] = useState([])
-    const [entidadesFinanciadoras, setEntidadesFinanciadoras] = useState([])
     const [total, setTotal] = useState(0)
     const [totalPages, setTotalPages] = useState(0)
     const [currentPage, setCurrentPage] = useState(1)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(null)
-
-    const [filtros, setFiltros] = useState({
-        estado: '',
-        entidad: '',
-        fechaDesde: '',
-        fechaHasta: '',
-        busqueda: '',
-    })
+    const [filtros, setFiltros] = useState(INITIAL_FILTERS)
+    const [filtrosAplicados, setFiltrosAplicados] = useState(INITIAL_FILTERS)
 
     const cargarProtestos = useCallback(async (page = 1) => {
         setIsLoading(true)
         setError(null)
 
         try {
-            const resultado = await obtenerProtestos({ ...filtros, page })
+            const resultado = await obtenerProtestos({ ...filtrosAplicados, page })
             setProtestos(resultado.protestos)
             setTotal(resultado.total)
             setTotalPages(resultado.totalPages)
@@ -44,24 +46,19 @@ export function useProtestosAdmin() {
         } finally {
             setIsLoading(false)
         }
-    }, [filtros])
-
-    const cargarEntidades = useCallback(async () => {
-        try {
-            const data = await obtenerEntidadesFinanciadoras()
-            setEntidadesFinanciadoras(data)
-        } catch (err) {
-            console.error('Error cargando entidades:', err.message)
-        }
-    }, [])
-
-    useEffect(() => {
-        cargarEntidades()
-    }, [cargarEntidades])
+    }, [filtrosAplicados])
 
     useEffect(() => {
         cargarProtestos(1)
     }, [cargarProtestos])
+
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            setFiltrosAplicados(filtros)
+        }, FILTER_DEBOUNCE_MS)
+
+        return () => window.clearTimeout(timeoutId)
+    }, [filtros])
 
     const cambiarEstado = useCallback(async (protestoId, nuevoEstado) => {
         const actualizado = await cambiarEstadoProtestoAdmin(protestoId, nuevoEstado)
@@ -86,12 +83,12 @@ export function useProtestosAdmin() {
     }, [])
 
     const limpiarFiltros = useCallback(() => {
-        setFiltros({ estado: '', entidad: '', fechaDesde: '', fechaHasta: '', busqueda: '' })
+        setFiltros(INITIAL_FILTERS)
+        setFiltrosAplicados(INITIAL_FILTERS)
     }, [])
 
     return {
         protestos,
-        entidadesFinanciadoras,
         total,
         totalPages,
         currentPage,

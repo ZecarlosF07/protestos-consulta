@@ -12,7 +12,7 @@ import { CambiarEstadoProtestoModal } from './CambiarEstadoProtestoModal'
 /** Página de gestión administrativa de protestos */
 export function ProtestosPage() {
     const {
-        protestos, entidadesFinanciadoras, total, totalPages, currentPage,
+        protestos, total, totalPages, currentPage,
         isLoading, error, filtros,
         actualizarFiltro, limpiarFiltros, cambiarEstado, obtenerHistorial,
         irAPagina, recargar,
@@ -30,15 +30,6 @@ export function ProtestosPage() {
         } catch (err) {
             setActionError(err.message)
         }
-    }
-
-    if (isLoading) {
-        return (
-            <div className="flex items-center justify-center py-20">
-                <span className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
-                <span className="ml-3 text-sm text-text-secondary">Cargando protestos...</span>
-            </div>
-        )
     }
 
     return (
@@ -66,17 +57,20 @@ export function ProtestosPage() {
             <div className="mb-4">
                 <ProtestosFilters
                     filtros={filtros}
-                    entidadesFinanciadoras={entidadesFinanciadoras}
                     onFiltroChange={actualizarFiltro}
                     onLimpiar={limpiarFiltros}
                 />
             </div>
 
-            <ProtestosAdminTable
-                protestos={protestos}
-                onVerHistorial={setHistorialProtesto}
-                onCambiarEstado={setCambiarEstadoProtesto}
-            />
+            {isLoading ? (
+                <TableLoadingState />
+            ) : (
+                <ProtestosAdminTable
+                    protestos={protestos}
+                    onVerHistorial={setHistorialProtesto}
+                    onCambiarEstado={setCambiarEstadoProtesto}
+                />
+            )}
 
             <div className="mt-4">
                 <Pagination
@@ -102,6 +96,17 @@ export function ProtestosPage() {
                     onClose={() => setCambiarEstadoProtesto(null)}
                 />
             )}
+        </div>
+    )
+}
+
+function TableLoadingState() {
+    return (
+        <div className="rounded-xl border border-border bg-white py-16">
+            <div className="flex items-center justify-center">
+                <span className="h-6 w-6 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                <span className="ml-3 text-sm text-text-secondary">Cargando protestos...</span>
+            </div>
         </div>
     )
 }

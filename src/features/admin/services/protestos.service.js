@@ -10,10 +10,18 @@ const PROTESTO_SELECT = `
 
 /**
  * Obtiene protestos paginados con filtros opcionales.
- * @param {{ estado?: string, entidad?: string, fechaDesde?: string, fechaHasta?: string, busqueda?: string, page?: number }} filtros
+ * @param {{ estado?: string, entidad?: string, fechaDesde?: string, fechaHasta?: string, busquedaTipo?: string, busqueda?: string, page?: number }} filtros
  */
 export async function obtenerProtestos(filtros = {}) {
-    const { estado, entidad, fechaDesde, fechaHasta, busqueda, page = 1 } = filtros
+    const {
+        estado,
+        entidad,
+        fechaDesde,
+        fechaHasta,
+        busquedaTipo = 'documento',
+        busqueda,
+        page = 1,
+    } = filtros
 
     let query = supabase
         .from('protestos')
@@ -38,9 +46,7 @@ export async function obtenerProtestos(filtros = {}) {
     }
 
     if (busqueda) {
-        query = query.or(
-            `numero_documento.ilike.%${busqueda}%,nombre_persona.ilike.%${busqueda}%,secuencia.ilike.%${busqueda}%`
-        )
+        query = applyBusquedaFilter(query, busquedaTipo, busqueda.trim())
     }
 
     const from = (page - 1) * PAGE_SIZE
@@ -57,6 +63,18 @@ export async function obtenerProtestos(filtros = {}) {
         totalPages: Math.ceil((count ?? 0) / PAGE_SIZE),
         currentPage: page,
     }
+}
+
+function applyBusquedaFilter(query, tipo, valor) {
+    if (tipo === 'secuencia') {
+        return query.ilike('secuencia', `${valor}%`)
+    }
+
+    if (tipo === 'nombre') {
+        return query.ilike('nombre_persona', `%${valor}%`)
+    }
+
+    return query.ilike('numero_documento', `${valor}%`)
 }
 
 /** Obtiene un protesto por ID */
@@ -115,17 +133,4 @@ export async function obtenerHistorialProtesto(protestoId) {
     if (error) throw new Error(error.message)
 
     return data ?? []
-}
-
-/** Obtiene las entidades financiadoras únicas para el filtro */
-export async function obtenerEntidadesFinanciadoras() {
-    const { data, error } = await supabase
-        .from('protestos')
-        .select('entidad_financiadora')
-        .is('deleted_at', null)
-
-    if (error) throw new Error(error.message)
-
-    const unicas = [...new Set((data ?? []).map(p => p.entidad_financiadora).filter(Boolean))]
-    return unicas.sort()
 }

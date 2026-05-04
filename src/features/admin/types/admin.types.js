@@ -64,6 +64,7 @@
  * @property {string} entidad
  * @property {string} fechaDesde
  * @property {string} fechaHasta
+ * @property {'documento'|'secuencia'|'nombre'} busquedaTipo
  * @property {string} busqueda
  */
 
@@ -112,6 +113,13 @@ export const PROTESTO_TRANSITIONS = {
     en_proceso: ['vigente', 'levantado'],
     levantado: [],
 }
+
+/** Tipos de búsqueda administrativa de protestos */
+export const PROTESTO_BUSQUEDA_TIPOS = [
+    { value: 'documento', label: 'Documento' },
+    { value: 'secuencia', label: 'Secuencia' },
+    { value: 'nombre', label: 'Nombre' },
+]
 
 /**
  * @typedef {'activa'|'bloqueada'} EstadoEntidad

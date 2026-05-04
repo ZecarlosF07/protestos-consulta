@@ -1,8 +1,13 @@
 import { Icon } from '../../shared/components/atoms/Icon'
-import { ESTADO_PROTESTO_LABELS } from '../types/admin.types'
+import {
+    ESTADO_PROTESTO_LABELS,
+    PROTESTO_BUSQUEDA_TIPOS,
+} from '../types/admin.types'
 
 /** Barra de filtros para el listado de protestos */
-export function ProtestosFilters({ filtros, entidadesFinanciadoras, onFiltroChange, onLimpiar }) {
+export function ProtestosFilters({ filtros, onFiltroChange, onLimpiar }) {
+    const busquedaPlaceholder = getBusquedaPlaceholder(filtros.busquedaTipo)
+
     return (
         <div className="rounded-xl border border-border bg-white p-4">
             <div className="flex flex-wrap items-end gap-3">
@@ -11,13 +16,25 @@ export function ProtestosFilters({ filtros, entidadesFinanciadoras, onFiltroChan
                     <span className="text-sm font-medium text-text-secondary">Filtros:</span>
                 </div>
 
-                <FilterField label="Búsqueda">
+                <FilterField label="Buscar por">
+                    <select
+                        value={filtros.busquedaTipo}
+                        onChange={(e) => onFiltroChange('busquedaTipo', e.target.value)}
+                        className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
+                    >
+                        {PROTESTO_BUSQUEDA_TIPOS.map(({ value, label }) => (
+                            <option key={value} value={value}>{label}</option>
+                        ))}
+                    </select>
+                </FilterField>
+
+                <FilterField label="Valor">
                     <input
                         type="text"
-                        placeholder="Doc, nombre o secuencia..."
+                        placeholder={busquedaPlaceholder}
                         value={filtros.busqueda}
                         onChange={(e) => onFiltroChange('busqueda', e.target.value)}
-                        className="w-48 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
+                        className="w-56 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
                     />
                 </FilterField>
 
@@ -35,16 +52,13 @@ export function ProtestosFilters({ filtros, entidadesFinanciadoras, onFiltroChan
                 </FilterField>
 
                 <FilterField label="Entidad">
-                    <select
+                    <input
+                        type="text"
+                        placeholder="Entidad financiadora..."
                         value={filtros.entidad}
                         onChange={(e) => onFiltroChange('entidad', e.target.value)}
-                        className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
-                    >
-                        <option value="">Todas</option>
-                        {entidadesFinanciadoras.map((e) => (
-                            <option key={e} value={e}>{e}</option>
-                        ))}
-                    </select>
+                        className="w-56 rounded-lg border border-border px-3 py-1.5 text-sm focus:border-accent focus:outline-none"
+                    />
                 </FilterField>
 
                 <FilterField label="Desde">
@@ -74,6 +88,12 @@ export function ProtestosFilters({ filtros, entidadesFinanciadoras, onFiltroChan
             </div>
         </div>
     )
+}
+
+function getBusquedaPlaceholder(tipo) {
+    if (tipo === 'secuencia') return 'Ej: 2024-000123'
+    if (tipo === 'nombre') return 'Nombre o razón social...'
+    return 'DNI o RUC...'
 }
 
 function FilterField({ label, children }) {
