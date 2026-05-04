@@ -61,14 +61,14 @@ export function useProtestosAdmin() {
     }, [filtros])
 
     const cambiarEstado = useCallback(async (protestoId, nuevoEstado) => {
-        const actualizado = await cambiarEstadoProtestoAdmin(protestoId, nuevoEstado)
+        const { anterior, actualizado } = await cambiarEstadoProtestoAdmin(protestoId, nuevoEstado)
         await registrarAuditoria({
             usuarioId: user.id,
             accion: 'CAMBIAR_ESTADO_PROTESTO',
             entidadAfectada: 'protesto',
             entidadAfectadaId: protestoId,
             descripcion: `Estado cambiado a "${nuevoEstado}"`,
-            metadata: { estado_anterior: actualizado.estado, nuevo_estado: nuevoEstado },
+            metadata: { estado_anterior: anterior.estado, nuevo_estado: actualizado.estado },
         })
         await cargarProtestos(currentPage)
         return actualizado

@@ -114,7 +114,10 @@ export async function cambiarEstadoProtestoAdmin(protestoId, nuevoEstado) {
 
     if (error) throw new Error(error.message)
 
-    return data
+    return {
+        anterior: protesto,
+        actualizado: data,
+    }
 }
 
 /** Obtiene historial de auditoría de un protesto */
