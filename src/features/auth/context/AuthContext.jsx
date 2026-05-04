@@ -10,7 +10,6 @@ import { ejecutarLogin, ejecutarLogout, interpretarErrorAuth } from '../services
 import { AuthContext } from './auth-context-def'
 
 export function AuthProvider({ children }) {
-    const [session, setSession] = useState(null)
     const [userProfile, setUserProfile] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -39,7 +38,6 @@ export function AuthProvider({ children }) {
 
                 if (currentSession?.user) {
                     sessionTokenRef.current = currentSession.access_token
-                    setSession(currentSession)
                     await loadUserProfile(currentSession.user.id)
                 }
             } catch (err) {
@@ -56,17 +54,12 @@ export function AuthProvider({ children }) {
 
             if (event === 'SIGNED_IN' && newSession?.user) {
                 sessionTokenRef.current = newSession.access_token
-                setSession(newSession)
-                // Solo cargar perfil si no existe aún (evita recarga al volver de otra ventana)
-                if (!userProfile) {
-                    await loadUserProfile(newSession.user.id)
-                }
+                await loadUserProfile(newSession.user.id)
                 return
             }
 
             if (event === 'SIGNED_OUT') {
                 sessionTokenRef.current = null
-                setSession(null)
                 setUserProfile(null)
                 return
             }
@@ -75,7 +68,6 @@ export function AuthProvider({ children }) {
             if (event === 'TOKEN_REFRESHED' && newSession) {
                 if (newSession.access_token === sessionTokenRef.current) return
                 sessionTokenRef.current = newSession.access_token
-                setSession(newSession)
             }
         })
 
@@ -104,15 +96,13 @@ export function AuthProvider({ children }) {
 
         if (mountedRef.current) {
             sessionTokenRef.current = null
-            setSession(null)
             setUserProfile(null)
             setError(null)
         }
     }, [userProfile])
 
-    // session se excluye de las dependencias del memo para evitar re-renders
+    // isAuthenticated usa sessionTokenRef para evitar re-renders
     // cuando solo cambia el token (ej: al volver de otra ventana).
-    // isAuthenticated usa sessionTokenRef que siempre está sincronizado.
     const value = useMemo(() => ({
         user: userProfile,
         loading,

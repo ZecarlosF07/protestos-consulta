@@ -14,14 +14,14 @@ export async function ejecutarLogin(email, password) {
     const profile = await getUserProfile(data.user.id)
 
     if (!isUserOperational(profile)) {
-        await authSignOut()
-
-        registrarAuditoria({
+        await registrarAuditoria({
             usuarioId: data.user.id,
             entidadFinancieraId: profile?.entidad_financiera_id,
             accion: 'LOGIN_BLOQUEADO',
             descripcion: 'Intento de acceso con cuenta bloqueada o entidad inactiva',
         })
+
+        await authSignOut()
 
         const reason = profile?.estado === 'bloqueado'
             ? 'Tu cuenta se encuentra bloqueada.'
@@ -30,7 +30,7 @@ export async function ejecutarLogin(email, password) {
         throw new Error(reason)
     }
 
-    registrarAuditoria({
+    await registrarAuditoria({
         usuarioId: data.user.id,
         entidadFinancieraId: profile?.entidad_financiera_id,
         accion: 'LOGIN_EXITOSO',
@@ -45,7 +45,7 @@ export async function ejecutarLogin(email, password) {
  */
 export async function ejecutarLogout(userProfile) {
     if (userProfile) {
-        registrarAuditoria({
+        await registrarAuditoria({
             usuarioId: userProfile.id,
             entidadFinancieraId: userProfile.entidad_financiera_id,
             accion: 'LOGOUT',

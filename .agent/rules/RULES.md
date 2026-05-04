@@ -24,7 +24,6 @@ Este directorio contiene las reglas y guías para el asistente de IA (Antigravit
 - Agrupa imports: externos primero, luego internos, ordenados alfabéticamente
 - Evita dependencias circulares entre módulos
 - Prefiere funciones pequeñas y específicas sobre funciones grandes y genéricas
-- Usa TypeScript estricto, evita any y as cuando sea posible
 - Mantén funciones puras cuando sea posible, evita efectos secundarios inneces
 - Reutiliza componentes existentes antes de crear nuevos
 - Estructura archivos por feature o dominio, no por tipo de archivo
@@ -33,3 +32,4 @@ Este directorio contiene las reglas y guías para el asistente de IA (Antigravit
 - Escribe código autodocumentado con nombres claros antes que comentarios extensos
 - La UI debe ser minimalista. Nada de agregar muchos colores.
 - Las migraciones de supabase se crean en la carpeta supabase para ejecutarlas con el CLI
+- Compilar siempre con Yarn

@@ -1,6 +1,8 @@
 # Hitos del Proyecto – Plan de Implementación
 
-Este documento define los **7 hitos oficiales** del proyecto y será utilizado como guía para el equipo de desarrollo. Cada hito representa un entregable funcional y validable, siguiendo un enfoque **data‑first, incremental y orientado a vertical slices**, adecuado para un SaaS institucional.
+Este documento define los **7 hitos oficiales del MVP inicial** del proyecto y será utilizado como guía base para el equipo de desarrollo. Cada hito representa un entregable funcional y validable, siguiendo un enfoque **data‑first, incremental y orientado a vertical slices**, adecuado para un SaaS institucional.
+
+Posteriormente, cuando el sistema pasó de MVP a operación funcional, se agregaron hitos de ampliación y estabilización en `docs/hitos/`. Los hitos 8 al 14 documentan mejoras operativas, módulos administrativos adicionales, control documental, formatos PDF con correlativos y correcciones finales de seguridad.
 
 ---
 
@@ -142,5 +144,4 @@ Permitir la actualización masiva de información oficial proveniente de la Cám
 
 Cada hito es **independiente pero acumulativo**. El proyecto puede validarse funcionalmente al finalizar cada uno, reduciendo riesgos, retrabajo y deuda técnica.
 
-Este roadmap debe usarse como referencia oficial para planificación, estimación y seguimiento del desarrollo.
-
+Este roadmap debe usarse como referencia oficial del MVP inicial. Para la operación actual del sistema, deben revisarse también los documentos individuales de `docs/hitos/`, donde se detallan las ampliaciones posteriores al MVP y sus criterios de validación.

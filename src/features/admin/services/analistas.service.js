@@ -36,7 +36,7 @@ export async function obtenerEntidadesFinancieras() {
 
 /**
  * Crea un nuevo analista: usuario en auth + registro en tabla usuarios.
- * Utiliza supabase.auth.admin via edge function o directamente.
+ * Utiliza la RPC administrativa `crear_usuario`; no usa flujo de auto-registro.
  */
 export async function crearAnalista({
     email,
@@ -47,32 +47,23 @@ export async function crearAnalista({
     cargo,
     entidad_financiera_id,
 }) {
-    // Crear usuario en auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: { nombre_completo, dni, rol: 'analista' },
-        },
+    const { data: userId, error: rpcError } = await supabase.rpc('crear_usuario', {
+        p_email: email,
+        p_password: password,
+        p_nombre: nombre_completo,
+        p_dni: dni,
+        p_telefono: telefono || null,
+        p_cargo: cargo || null,
+        p_rol: 'analista',
+        p_entidad_id: entidad_financiera_id,
     })
 
-    if (authError) throw new Error(authError.message)
+    if (rpcError) throw new Error(rpcError.message)
 
-    // Insertar en tabla usuarios
     const { data, error } = await supabase
         .from('usuarios')
-        .insert({
-            id: authData.user.id,
-            email,
-            nombre_completo,
-            dni,
-            telefono,
-            cargo,
-            rol: 'analista',
-            entidad_financiera_id,
-            estado: 'activo',
-        })
         .select(ANALISTA_SELECT)
+        .eq('id', userId)
         .single()
 
     if (error) throw new Error(error.message)
