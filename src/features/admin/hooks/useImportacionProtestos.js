@@ -5,16 +5,49 @@ import { useAuth } from '../../auth/hooks/useAuth'
 import {
     actualizarImportacionProtestos,
     crearImportacionProtestos,
-    insertarProtestoDesdeImportacion,
+    importarProtestosAtomicos,
     obtenerHistorialImportaciones,
     obtenerSecuenciasExistentes,
 } from '../services/importacion.service'
+import { IMPORTACION_ESTADO } from '../types/importacion.types'
 import { parsearExcelProtestos } from '../utils/importacion-excel.utils'
 
-function obtenerEstadoFinal(registrosError, registrosExitosos) {
-    if (registrosExitosos === 0 && registrosError > 0) return 'fallida'
-    if (registrosError > 0) return 'completada_con_errores'
-    return 'completada'
+function crearErrorExistente(fila) {
+    return {
+        fila: fila.fila,
+        columna: 'secuencia',
+        campo: 'secuencia',
+        valor: fila.secuencia,
+        secuencia: fila.secuencia,
+        mensaje: 'Secuencia ya existe en la base de datos',
+    }
+}
+
+function crearErrorSinFilasValidas() {
+    return {
+        fila: null,
+        columna: null,
+        campo: null,
+        valor: '',
+        secuencia: null,
+        mensaje: 'El archivo no contiene filas válidas para importar',
+    }
+}
+
+function prepararPayloadAtomico(rows) {
+    return rows.map((row) => {
+        const protesto = { ...row }
+        delete protesto.fila
+        return protesto
+    })
+}
+
+function contarRegistrosConError(errores) {
+    const filas = errores
+        .map(error => error.fila)
+        .filter(fila => fila !== null && fila !== undefined)
+    if (!filas.length) return errores.length
+    return new Set(filas).size
 }
 
 export function useImportacionProtestos() {
@@ -50,47 +83,58 @@ export function useImportacionProtestos() {
             })
 
             const parsed = await parsearExcelProtestos(filePayload)
-            if (parsed.missingHeaders.length > 0) {
-                const mensaje = `Encabezados faltantes: ${parsed.missingHeaders.join(', ')}`
-                throw new Error(mensaje)
-            }
 
             const secuencias = parsed.validRows.map(r => r.secuencia)
             const existentes = await obtenerSecuenciasExistentes(secuencias)
             const errores = [...parsed.errors]
-            let exitosos = 0
-
-            for (const fila of parsed.validRows) {
-                if (existentes.has(fila.secuencia)) {
-                    errores.push({ fila: fila.fila, secuencia: fila.secuencia, mensaje: 'Secuencia ya existe en la base de datos' })
-                    continue
-                }
-                try {
-                    const { fila: _fila, ...payloadFila } = fila
-                    await insertarProtestoDesdeImportacion({
-                        ...payloadFila,
-                        importacion_id: importacionId,
-                        estado: 'vigente',
-                    })
-                    exitosos += 1
-                } catch (err) {
-                    errores.push({ fila: fila.fila, secuencia: fila.secuencia, mensaje: err.message })
-                }
+            parsed.validRows
+                .filter(fila => existentes.has(fila.secuencia))
+                .forEach(fila => errores.push(crearErrorExistente(fila)))
+            if (parsed.validRows.length === 0 && errores.length === 0) {
+                errores.push(crearErrorSinFilasValidas())
             }
+
+            if (errores.length > 0) {
+                const resumenFallido = {
+                    totalRegistros: parsed.totalRows ?? 0,
+                    registrosExitosos: 0,
+                    registrosError: contarRegistrosConError(errores),
+                    estado: IMPORTACION_ESTADO.FALLIDA,
+                }
+
+                await actualizarImportacionProtestos(importacionId, {
+                    total_registros: resumenFallido.totalRegistros,
+                    registros_exitosos: 0,
+                    registros_error: resumenFallido.registrosError,
+                    estado: IMPORTACION_ESTADO.FALLIDA,
+                    errores_detalle: errores,
+                })
+
+                await registrarAuditoria({
+                    usuarioId: user.id,
+                    accion: 'IMPORTAR_PROTESTOS_EXCEL',
+                    entidadAfectada: 'importaciones_protestos',
+                    entidadAfectadaId: importacionId,
+                    descripcion: `Importación rechazada: ${nombreArchivo} (${errores.length} error(es))`,
+                    metadata: { ...resumenFallido, archivo: nombreArchivo },
+                })
+
+                setResultado({ ...resumenFallido, errores })
+                await cargarHistorial()
+                return
+            }
+
+            const insertados = await importarProtestosAtomicos(
+                importacionId,
+                prepararPayloadAtomico(parsed.validRows)
+            )
 
             const resumen = {
                 totalRegistros: parsed.totalRows ?? 0,
-                registrosExitosos: exitosos,
-                registrosError: errores.length,
+                registrosExitosos: insertados,
+                registrosError: 0,
+                estado: IMPORTACION_ESTADO.COMPLETADA,
             }
-
-            await actualizarImportacionProtestos(importacionId, {
-                total_registros: resumen.totalRegistros,
-                registros_exitosos: resumen.registrosExitosos,
-                registros_error: resumen.registrosError,
-                estado: obtenerEstadoFinal(resumen.registrosError, resumen.registrosExitosos),
-                errores_detalle: errores,
-            })
 
             await registrarAuditoria({
                 usuarioId: user.id,
@@ -101,16 +145,39 @@ export function useImportacionProtestos() {
                 metadata: { ...resumen, archivo: nombreArchivo },
             })
 
-            setResultado({ ...resumen, errores })
+            setResultado({ ...resumen, errores: [] })
             await cargarHistorial()
         } catch (err) {
+            const errores = [{
+                fila: null,
+                columna: null,
+                campo: null,
+                valor: '',
+                secuencia: null,
+                mensaje: err.message,
+            }]
             if (importacionId) {
                 await actualizarImportacionProtestos(importacionId, {
-                    estado: 'fallida',
+                    estado: IMPORTACION_ESTADO.FALLIDA,
                     registros_error: 1,
-                    errores_detalle: [{ fila: null, secuencia: null, mensaje: err.message }],
+                    errores_detalle: errores,
+                })
+                await registrarAuditoria({
+                    usuarioId: user.id,
+                    accion: 'IMPORTAR_PROTESTOS_EXCEL',
+                    entidadAfectada: 'importaciones_protestos',
+                    entidadAfectadaId: importacionId,
+                    descripcion: `Importación fallida: ${err.message}`,
+                    metadata: { estado: IMPORTACION_ESTADO.FALLIDA },
                 })
             }
+            setResultado({
+                totalRegistros: 0,
+                registrosExitosos: 0,
+                registrosError: 1,
+                estado: IMPORTACION_ESTADO.FALLIDA,
+                errores,
+            })
             setError(err.message || 'No se pudo procesar la importación')
         } finally {
             setIsLoading(false)

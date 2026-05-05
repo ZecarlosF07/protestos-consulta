@@ -13,7 +13,7 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
 3. Validar estructura del archivo Excel:
    - Encabezados esperados
    - Tipos de datos
-4. Procesar el archivo fila por fila.
+4. Validar el archivo completo antes de insertar datos.
 5. Ignorar campos no relevantes definidos en el análisis (IdSec, TPG).
 6. Validar campos obligatorios del protesto:
    - Secuencia
@@ -24,7 +24,7 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
    - Fecha de protesto
 7. Prevenir duplicados mediante validación por secuencia.
 8. Insertar únicamente protestos nuevos.
-9. Registrar errores de importación sin interrumpir el proceso completo.
+9. Registrar errores de importación y rechazar el archivo completo si existe cualquier error.
 10. Registrar el resultado de cada importación.
 11. Generar registros de auditoría asociados a la carga.
 
@@ -38,7 +38,8 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
 - Prevención de duplicados a nivel de lógica de aplicación.
 - Registro en tabla de importaciones de protestos.
 - Registro de auditoría por cada proceso de carga.
-- Manejo de errores por fila.
+- Manejo de errores por fila, columna, campo y valor observado.
+- Inserción atómica de protestos: todo el archivo se importa o no se importa ningún registro.
 - Mensajes claros de resultado de importación para el Administrador.
 
 ---
@@ -53,6 +54,7 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
   - Registros importados correctamente
   - Registros con error
 - Los errores deben ser informativos y revisables.
+- Si existe cualquier error, no debe insertarse ningún protesto.
 - La información importada debe quedar disponible inmediatamente para consultas.
 
 ---
@@ -62,8 +64,8 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
 - El Administrador puede cargar archivos Excel.
 - El sistema valida correctamente la estructura del archivo.
 - Solo se insertan protestos nuevos.
-- Los duplicados son ignorados correctamente.
-- Los errores de filas no detienen la importación completa.
+- Los duplicados rechazan la importación completa.
+- Los errores de filas detienen la importación completa antes de insertar datos.
 - El resultado de la importación queda registrado.
 - El proceso genera registros de auditoría.
 - Los nuevos protestos pueden consultarse desde el Hito 5.
@@ -72,3 +74,5 @@ Este hito asegura que el sistema se mantenga actualizado con data oficial sin co
 ---
 
 > Este hito cierra el **ciclo operativo del MVP**, asegurando actualización continua de la información oficial.
+>
+> **Actualización operativa:** El Hito 15 reemplaza la importación parcial por una importación atómica. Desde ese ajuste, un archivo con errores queda rechazado completo para evitar cargas parciales difíciles de auditar.

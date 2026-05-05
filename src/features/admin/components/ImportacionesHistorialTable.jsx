@@ -4,7 +4,6 @@ import { formatearFechaHora } from '../../auditoria/utils/auditoria.utils'
 const ESTADO_LABELS = {
     procesando: 'Procesando',
     completada: 'Completada',
-    completada_con_errores: 'Completada con errores',
     fallida: 'Fallida',
 }
 

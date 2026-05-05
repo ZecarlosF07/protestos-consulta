@@ -152,8 +152,11 @@ Historial de cargas de Excel.
 | total_registros | integer | Filas procesadas |
 | registros_exitosos | integer | Importados |
 | registros_error | integer | Con error |
+| estado | varchar(20) | Estado: procesando, completada o fallida |
+| errores_detalle | jsonb | Detalle de errores por fila |
 | created_at | timestamp | Fecha de importación |
-| deleted_at | timestamp | Soft delete |
+
+Las importaciones operativas son atómicas: si el archivo contiene errores, la importación queda `fallida` y no se inserta ningún protesto. La inserción final se realiza mediante la RPC `importar_protestos_atomicos`.
 
 ---
 

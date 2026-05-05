@@ -290,7 +290,7 @@ Historial de cargas masivas de archivos Excel.
 | `created_at` | `timestamptz` | NO | `now()` | Fecha de importación |
 
 **Constraints:**
-- `CHECK (estado IN ('procesando', 'completada', 'completada_con_errores', 'fallida'))`
+- `CHECK (estado IN ('procesando', 'completada', 'fallida'))`
 - `FOREIGN KEY (usuario_id) REFERENCES usuarios(id)`
 
 > **Nota:** Se eliminó `deleted_at`. Las importaciones son registros históricos que no deben eliminarse. Se agregaron `estado` y `errores_detalle` para mejor trazabilidad.
@@ -358,7 +358,7 @@ CREATE TABLE IF NOT EXISTS importaciones_protestos (
   registros_exitosos  integer      NOT NULL DEFAULT 0,
   registros_error     integer      NOT NULL DEFAULT 0,
   estado              varchar(20)  NOT NULL DEFAULT 'procesando'
-                        CHECK (estado IN ('procesando', 'completada', 'completada_con_errores', 'fallida')),
+                        CHECK (estado IN ('procesando', 'completada', 'fallida')),
   errores_detalle     jsonb,
   created_at          timestamptz  NOT NULL DEFAULT now()
 );

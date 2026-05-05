@@ -35,27 +35,14 @@ export async function actualizarImportacionProtestos(importacionId, payload) {
     if (error) throw new Error(error.message)
 }
 
-export async function insertarProtestoDesdeImportacion(protesto) {
-    const payload = {
-        secuencia: protesto.secuencia,
-        tipo_documento: protesto.tipo_documento,
-        numero_documento: protesto.numero_documento,
-        nombre_persona: protesto.nombre_persona,
-        entidad_financiadora: protesto.entidad_financiadora,
-        entidad_fuente: protesto.entidad_fuente,
-        monto: protesto.monto,
-        fecha_protesto: protesto.fecha_protesto,
-        tarifa_levantamiento: protesto.tarifa_levantamiento ?? null,
-        tipo_valor: protesto.tipo_valor ?? null,
-        importacion_id: protesto.importacion_id ?? null,
-        estado: protesto.estado ?? 'vigente',
-    }
-
-    const { error } = await supabase
-        .from('protestos')
-        .insert(payload)
+export async function importarProtestosAtomicos(importacionId, protestos) {
+    const { data, error } = await supabase.rpc('importar_protestos_atomicos', {
+        p_importacion_id: importacionId,
+        p_protestos: protestos,
+    })
 
     if (error) throw new Error(error.message)
+    return data ?? 0
 }
 
 export async function obtenerSecuenciasExistentes(secuencias) {
@@ -72,7 +59,9 @@ export async function obtenerSecuenciasExistentes(secuencias) {
             .is('deleted_at', null)
 
         if (error) throw new Error(error.message)
-            ; (data ?? []).forEach(row => existentes.add(row.secuencia))
+
+        const rows = data ?? []
+        rows.forEach(row => existentes.add(row.secuencia))
     }
     return existentes
 }

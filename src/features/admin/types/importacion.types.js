@@ -1,5 +1,5 @@
 /**
- * @typedef {'procesando'|'completada'|'completada_con_errores'|'fallida'} EstadoImportacion
+ * @typedef {'procesando'|'completada'|'fallida'} EstadoImportacion
  */
 
 /**
@@ -11,9 +11,12 @@
 
 /**
  * @typedef {Object} ErrorImportacionFila
- * @property {number} fila
+ * @property {number|null} fila
  * @property {string} mensaje
  * @property {string|null} secuencia
+ * @property {string|null} columna
+ * @property {string|null} campo
+ * @property {string|null} valor
  */
 
 /**
@@ -34,7 +37,6 @@
 export const IMPORTACION_ESTADO = {
     PROCESANDO: 'procesando',
     COMPLETADA: 'completada',
-    COMPLETADA_CON_ERRORES: 'completada_con_errores',
     FALLIDA: 'fallida',
 }
 
@@ -47,3 +49,13 @@ export const EXCEL_HEADERS_REQUIRED = [
     'monto',
     'fecha_protesto',
 ]
+
+export const IMPORTACION_FIELD_LIMITS = {
+    secuencia: 50,
+    tipo_documento: 5,
+    numero_documento: 11,
+    nombre_persona: 255,
+    entidad_financiadora: 255,
+    entidad_fuente: 255,
+    tipo_valor: 50,
+}

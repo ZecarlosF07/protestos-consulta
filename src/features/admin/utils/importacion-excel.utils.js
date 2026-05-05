@@ -1,6 +1,9 @@
 import * as XLSX from 'xlsx'
 
-import { EXCEL_HEADERS_REQUIRED } from '../types/importacion.types'
+import {
+    EXCEL_HEADERS_REQUIRED,
+    IMPORTACION_FIELD_LIMITS,
+} from '../types/importacion.types'
 
 const HEADER_ALIASES = {
     secuencia: ['secuencia'],
@@ -18,6 +21,7 @@ const HEADER_ALIASES = {
 
 const IGNORED_COLUMNS = new Set(['idsec', 'tpg'])
 const HEADER_MAP = buildHeaderMap()
+const VALUE_PREVIEW_LIMIT = 120
 
 function buildHeaderMap() {
     const map = new Map()
@@ -38,7 +42,7 @@ function normalizeText(value) {
 }
 
 function isEmptyRow(row) {
-    return !Object.values(row).some(value => String(value ?? '').trim() !== '')
+    return !Object.values(row.cells).some(cell => String(cell.valor ?? '').trim() !== '')
 }
 
 function parseFecha(value) {
@@ -80,6 +84,89 @@ function resolveHeader(header) {
     return HEADER_MAP.get(normalizeText(header)) ?? null
 }
 
+function mapRawRow(raw) {
+    const cells = {}
+    Object.entries(raw).forEach(([header, value]) => {
+        const canonical = resolveHeader(header)
+        if (!canonical || IGNORED_COLUMNS.has(canonical)) return
+        cells[canonical] = { columna: header, valor: value }
+    })
+    return { cells }
+}
+
+function getCell(row, campo) {
+    return row.cells[campo] ?? { columna: campo, valor: '' }
+}
+
+function getText(row, campo) {
+    return String(getCell(row, campo).valor ?? '').trim()
+}
+
+function previewValue(value) {
+    const text = String(value ?? '').trim()
+    if (text.length <= VALUE_PREVIEW_LIMIT) return text
+    return `${text.slice(0, VALUE_PREVIEW_LIMIT)}...`
+}
+
+function crearError({ fila, row, campo, mensaje, valor = null, secuencia = null }) {
+    const cell = campo ? getCell(row, campo) : { columna: null }
+    return {
+        fila,
+        columna: cell.columna ?? null,
+        campo: campo ?? null,
+        valor: previewValue(valor ?? cell.valor),
+        secuencia,
+        mensaje,
+    }
+}
+
+function validarRequeridos(row, fila, secuencia) {
+    return EXCEL_HEADERS_REQUIRED
+        .filter(campo => !getText(row, campo))
+        .map(campo => crearError({
+            fila,
+            row,
+            campo,
+            secuencia,
+            mensaje: 'Campo obligatorio vacío',
+        }))
+}
+
+function validarLongitudes(row, fila, valores, secuencia) {
+    return Object.entries(IMPORTACION_FIELD_LIMITS).flatMap(([campo, limite]) => {
+        const valor = valores[campo]
+        if (!valor || String(valor).length <= limite) return []
+        return crearError({
+            fila,
+            row,
+            campo,
+            valor,
+            secuencia,
+            mensaje: `Supera el máximo permitido de ${limite} caracteres`,
+        })
+    })
+}
+
+function obtenerCamposPresentes(rawRows) {
+    const fields = new Set()
+    Object.keys(rawRows[0] ?? {}).forEach((header) => {
+        const canonical = resolveHeader(header)
+        if (canonical && !IGNORED_COLUMNS.has(canonical)) fields.add(canonical)
+    })
+    return fields
+}
+
+function crearErroresEncabezado(missingHeaders) {
+    return missingHeaders.map(campo => ({
+        fila: null,
+        columna: null,
+        campo,
+        valor: '',
+        secuencia: null,
+        mensaje: `Encabezado obligatorio no encontrado: ${campo}`,
+    }))
+}
+
 async function obtenerArrayBuffer(filePayload) {
     if (filePayload?.arrayBuffer instanceof ArrayBuffer) {
         return filePayload.arrayBuffer
@@ -113,20 +200,16 @@ export async function parsearExcelProtestos(filePayload) {
     const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true })
     if (!rawRows.length) throw new Error('El archivo no contiene filas de datos')
 
-    const mappedRows = rawRows.map((raw) => {
-        const mapped = {}
-        Object.entries(raw).forEach(([header, value]) => {
-            const canonical = resolveHeader(header)
-            if (!canonical || IGNORED_COLUMNS.has(canonical)) return
-            mapped[canonical] = value
-        })
-        return mapped
-    })
-
-    const firstHeaderRow = mappedRows.find(row => !isEmptyRow(row)) ?? {}
-    const missingHeaders = EXCEL_HEADERS_REQUIRED.filter(h => !(h in firstHeaderRow))
+    const mappedRows = rawRows.map(mapRawRow)
+    const camposPresentes = obtenerCamposPresentes(rawRows)
+    const missingHeaders = EXCEL_HEADERS_REQUIRED.filter(h => !camposPresentes.has(h))
     if (missingHeaders.length > 0) {
-        return { validRows: [], errors: [], missingHeaders }
+        return {
+            validRows: [],
+            errors: crearErroresEncabezado(missingHeaders),
+            missingHeaders,
+            totalRows: 0,
+        }
     }
 
     const seenSecuencias = new Set()
@@ -139,27 +222,90 @@ export async function parsearExcelProtestos(filePayload) {
 
         processed += 1
         const fila = index + 2
-        const secuencia = String(row.secuencia ?? '').trim()
-        const numeroDocumento = String(row.numero_documento ?? '').replace(/\D/g, '')
+        const secuencia = getText(row, 'secuencia')
+        const numeroDocumento = getText(row, 'numero_documento').replace(/\D/g, '')
         const tipoDocumento = numeroDocumento.length === 8 ? 'DNI' : numeroDocumento.length === 11 ? 'RUC' : null
-        const nombrePersona = String(row.nombre_persona ?? '').trim()
-        const entidadFinanciadora = String(row.entidad_financiadora ?? '').trim()
-        const entidadFuente = String(row.entidad_fuente ?? '').trim()
-        const monto = parseMonto(row.monto)
-        const fecha = parseFecha(row.fecha_protesto)
+        const nombrePersona = getText(row, 'nombre_persona')
+        const entidadFinanciadora = getText(row, 'entidad_financiadora')
+        const entidadFuente = getText(row, 'entidad_fuente')
+        const tipoValor = getText(row, 'tipo_valor') || null
+        const monto = parseMonto(getCell(row, 'monto').valor)
+        const fecha = parseFecha(getCell(row, 'fecha_protesto').valor)
+        const tarifaRaw = getText(row, 'tarifa_levantamiento')
+        const tarifa = tarifaRaw ? parseMonto(getCell(row, 'tarifa_levantamiento').valor) : null
 
-        if (!secuencia || !numeroDocumento || !tipoDocumento || !nombrePersona || !entidadFinanciadora || !entidadFuente || !monto || !fecha) {
-            errors.push({ fila, secuencia: secuencia || null, mensaje: 'Fila invalida: faltan datos obligatorios o formato incorrecto' })
-            return
+        const valores = {
+            secuencia,
+            tipo_documento: tipoDocumento,
+            numero_documento: numeroDocumento,
+            nombre_persona: nombrePersona,
+            entidad_financiadora: entidadFinanciadora,
+            entidad_fuente: entidadFuente,
+            tipo_valor: tipoValor,
+        }
+        const rowErrors = [
+            ...validarRequeridos(row, fila, secuencia || null),
+            ...validarLongitudes(row, fila, valores, secuencia || null),
+        ]
+
+        if (numeroDocumento && !tipoDocumento) {
+            rowErrors.push(crearError({
+                fila,
+                row,
+                campo: 'numero_documento',
+                valor: getText(row, 'numero_documento'),
+                secuencia: secuencia || null,
+                mensaje: 'Debe tener 8 dígitos para DNI o 11 dígitos para RUC',
+            }))
+        }
+
+        if (getText(row, 'monto') && (!monto || monto <= 0)) {
+            rowErrors.push(crearError({
+                fila,
+                row,
+                campo: 'monto',
+                secuencia: secuencia || null,
+                mensaje: 'Monto inválido o menor/igual a cero',
+            }))
+        }
+
+        if (tarifaRaw && (tarifa === null || tarifa < 0)) {
+            rowErrors.push(crearError({
+                fila,
+                row,
+                campo: 'tarifa_levantamiento',
+                secuencia: secuencia || null,
+                mensaje: 'Tarifa inválida',
+            }))
+        }
+
+        if (getText(row, 'fecha_protesto') && !fecha) {
+            rowErrors.push(crearError({
+                fila,
+                row,
+                campo: 'fecha_protesto',
+                secuencia: secuencia || null,
+                mensaje: 'Fecha inválida',
+            }))
         }
 
         if (seenSecuencias.has(secuencia)) {
-            errors.push({ fila, secuencia, mensaje: 'Secuencia duplicada dentro del archivo' })
+            rowErrors.push(crearError({
+                fila,
+                row,
+                campo: 'secuencia',
+                secuencia,
+                mensaje: 'Secuencia duplicada dentro del archivo',
+            }))
+        }
+
+        if (rowErrors.length > 0) {
+            errors.push(...rowErrors)
+            if (secuencia) seenSecuencias.add(secuencia)
             return
         }
 
         seenSecuencias.add(secuencia)
-        const tipoValor = String(row.tipo_valor ?? '').trim() || null
 
         validRows.push({
             fila,
@@ -171,7 +317,7 @@ export async function parsearExcelProtestos(filePayload) {
             entidad_fuente: entidadFuente,
             monto,
             fecha_protesto: fecha,
-            tarifa_levantamiento: row.tarifa_levantamiento ? parseMonto(row.tarifa_levantamiento) : null,
+            tarifa_levantamiento: tarifa,
             tipo_valor: tipoValor,
         })
     })
