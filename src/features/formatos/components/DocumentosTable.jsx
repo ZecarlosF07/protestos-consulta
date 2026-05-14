@@ -47,6 +47,16 @@ export function DocumentosTable({ documentos, onDescargar, onRegenerarPdf, onAnu
 
 function DocumentoRow({ documento, onDescargar, onRegenerarPdf, onAnular }) {
     const tipoLabel = labelTipoSolicitante(documento.tipo_solicitante)
+    const isConstanciaAnotacion = Boolean(documento.metadata?.acreedor_titular_beneficiario)
+    const solicitante = isConstanciaAnotacion
+        ? documento.metadata.acreedor_titular_beneficiario
+        : documento.nombre_solicitante
+    const solicitanteDetalle = isConstanciaAnotacion
+        ? documento.metadata.comprobantes_pago
+        : `${tipoLabel}: ${documento.nro_documento}`
+    const documentoLabel = isConstanciaAnotacion
+        ? documento.metadata.deudor_documento
+        : tipoLabel
 
     return (
         <tr className="transition-colors hover:bg-surface/50">
@@ -54,11 +64,11 @@ function DocumentoRow({ documento, onDescargar, onRegenerarPdf, onAnular }) {
                 {formatearCorrelativo(documento.correlativo)}
             </td>
             <td className="px-4 py-3">
-                <p className="font-medium text-text-primary">{documento.nombre_solicitante}</p>
-                <p className="text-xs text-text-muted">{tipoLabel}: {documento.nro_documento}</p>
+                <p className="font-medium text-text-primary">{solicitante}</p>
+                <p className="text-xs text-text-muted">{solicitanteDetalle}</p>
             </td>
             <td className="px-4 py-3 text-text-secondary">
-                {tipoLabel}
+                {documentoLabel}
             </td>
             <td className="px-4 py-3 text-text-secondary">
                 {documento.emisor?.nombre_completo ?? '—'}

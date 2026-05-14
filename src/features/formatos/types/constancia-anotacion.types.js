@@ -97,7 +97,6 @@ export const CONSTANCIA_PDF_FIELDS = {
     lugar_pago: { x: 164, y: 576, maxWidth: 370, fontSize: 8.2, minFontSize: 7 },
     clase_serie_numero_titulo: { x: 222, y: 563, maxWidth: 300, fontSize: 8.2, minFontSize: 7 },
     vencimiento: { x: 155, y: 547, maxWidth: 375, fontSize: 8.2, minFontSize: 7 },
-    //hecho
     monto_moneda: { x: 280, y: 532, maxWidth: 243, fontSize: 8.2, minFontSize: 7 },
     deudor_documento: { x: 365, y: 517, maxWidth: 158, fontSize: 8.2, minFontSize: 7 },
     deudor_nombre_completo: { x: 85, y: 505, maxWidth: 440, fontSize: 7.4, minFontSize: 6.5 },
@@ -105,7 +104,6 @@ export const CONSTANCIA_PDF_FIELDS = {
     acreedor_titular_beneficiario: { x: 252, y: 474, maxWidth: 272, fontSize: 8, minFontSize: 7 },
     garantes_aval: { x: 170, y: 458, maxWidth: 355, fontSize: 8, minFontSize: 7 },
     endosatario_cesionario: { x: 232, y: 444, maxWidth: 292, fontSize: 8, minFontSize: 7 },
-    //hecho
     otros_datos_adicionales: { x: 224, y: 388, maxWidth: 310, fontSize: 7.6, minFontSize: 6 },
     fecha_anotacion_dia: { x: 108, y: 276, maxWidth: 35, fontSize: 8, minFontSize: 7 },
     fecha_anotacion_mes: { x: 150, y: 276, maxWidth: 95, fontSize: 8, minFontSize: 7 },

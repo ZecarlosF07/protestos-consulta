@@ -59,7 +59,7 @@ export function crearPayloadConstanciaAnotacion(values) {
     return {
         tipoSolicitante: digits.length === 11 ? 'empresa' : 'persona',
         nroDocumento: metadata.deudor_documento,
-        nombreSolicitante: metadata.deudor_nombre_completo,
+        nombreSolicitante: metadata.acreedor_titular_beneficiario,
         metadata,
     }
 }
