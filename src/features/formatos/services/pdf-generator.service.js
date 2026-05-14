@@ -123,13 +123,8 @@ function truncarTexto(texto, font, size, maxWidth) {
     return `${output}${suffix}`
 }
 
-function usarNegritaConstancia(field) {
-    return [
-        'deudor_documento',
-        'deudor_nombre_completo',
-        'deudor_domicilio',
-        'monto_moneda',
-    ].includes(field)
+function usarNegritaConstancia() {
+    return true
 }
 
 /** Genera un PDF base cuando no existe plantilla (fallback) */
