@@ -47,12 +47,30 @@ export function useDocumentosEmitidos(formatoId) {
         cargar()
     }, [cargar])
 
-    const generar = useCallback(async ({ tipoSolicitante, nroDocumento, nombreSolicitante }) => {
+    const generarPdfDocumento = useCallback(async (documento, { upsert = false } = {}) => {
+        const pdfBytes = await generarPdfConCorrelativo(
+            formato.nombre,
+            formato.codigo,
+            documento.correlativo,
+            documento.metadata
+        )
+        const ruta = await subirPdfGenerado(pdfBytes, formato.codigo, documento.correlativo, { upsert })
+        await actualizarRutaPdf(documento.id, ruta)
+        return ruta
+    }, [formato])
+
+    const generar = useCallback(async ({
+        tipoSolicitante,
+        nroDocumento,
+        nombreSolicitante,
+        metadata = null,
+    }) => {
         const currentUser = userRef.current
         if (!currentUser || !formato) return null
 
         setOperationLoading(true)
         setError(null)
+        let docCreado = null
         try {
             // 1. Generar correlativo y registrar en BD (sin PDF aún)
             const doc = await generarDocumento({
@@ -62,39 +80,77 @@ export function useDocumentosEmitidos(formatoId) {
                 nombreSolicitante: nombreSolicitante.trim(),
                 pdfRuta: null,
                 emitidoPor: currentUser.id,
+                metadata,
             })
+            docCreado = doc
 
             // 2. Generar PDF con el correlativo asignado
-            const pdfBytes = await generarPdfConCorrelativo(
-                formato.nombre, formato.codigo, doc.correlativo
-            )
+            await generarPdfDocumento(doc)
 
-            // 3. Subir PDF al storage
-            const ruta = await subirPdfGenerado(pdfBytes, formato.codigo, doc.correlativo)
-
-            // 4. Actualizar ruta en la BD
-            await actualizarRutaPdf(doc.id, ruta)
-
-            // 5. Auditoría
-            registrarAuditoria({
+            // 3. Auditoría
+            await registrarAuditoria({
                 usuarioId: currentUser.id,
                 entidadFinancieraId: null,
                 accion: 'DOCUMENTO_GENERADO',
                 entidadAfectada: 'documentos_emitidos',
                 entidadAfectadaId: doc.id,
                 descripcion: `Generado ${formato.nombre} - Correlativo ${doc.correlativo}`,
-                metadata: { formato: formato.codigo, correlativo: doc.correlativo },
+                metadata: {
+                    formato: formato.codigo,
+                    correlativo: doc.correlativo,
+                    datos_documento: metadata,
+                },
             })
 
             await cargar()
             return doc
         } catch (err) {
-            setError(err.message)
+            if (docCreado) {
+                await cargar()
+                setError(
+                    `El correlativo ${docCreado.correlativo} quedó reservado, pero no se completó el PDF: ${err.message}. Puede regenerarse desde el historial.`
+                )
+            } else {
+                setError(err.message)
+            }
             throw err
         } finally {
             setOperationLoading(false)
         }
-    }, [formatoId, formato, cargar])
+    }, [formatoId, formato, generarPdfDocumento, cargar])
+
+    const regenerarPdf = useCallback(async (documento) => {
+        const currentUser = userRef.current
+        if (!currentUser || !formato) return null
+
+        setOperationLoading(true)
+        setError(null)
+        try {
+            const ruta = await generarPdfDocumento(documento, { upsert: true })
+
+            await registrarAuditoria({
+                usuarioId: currentUser.id,
+                entidadFinancieraId: null,
+                accion: 'DOCUMENTO_PDF_REGENERADO',
+                entidadAfectada: 'documentos_emitidos',
+                entidadAfectadaId: documento.id,
+                descripcion: `Regenerado PDF de ${formato.nombre} - Correlativo ${documento.correlativo}`,
+                metadata: {
+                    formato: formato.codigo,
+                    correlativo: documento.correlativo,
+                    ruta,
+                },
+            })
+
+            await cargar()
+            return ruta
+        } catch (err) {
+            setError(`No se pudo regenerar el PDF: ${err.message}`)
+            throw err
+        } finally {
+            setOperationLoading(false)
+        }
+    }, [formato, generarPdfDocumento, cargar])
 
     const anular = useCallback(async (documentoId, motivo) => {
         const currentUser = userRef.current
@@ -105,7 +161,7 @@ export function useDocumentosEmitidos(formatoId) {
         try {
             const doc = await anularDocumento(documentoId, currentUser.id, motivo)
 
-            registrarAuditoria({
+            await registrarAuditoria({
                 usuarioId: currentUser.id,
                 entidadFinancieraId: null,
                 accion: 'DOCUMENTO_ANULADO',
@@ -137,6 +193,7 @@ export function useDocumentosEmitidos(formatoId) {
         operationLoading,
         error,
         generar,
+        regenerarPdf,
         anular,
         descargar,
         recargar: cargar,

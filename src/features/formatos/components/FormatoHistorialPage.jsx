@@ -14,7 +14,7 @@ export function FormatoHistorialPage() {
     const navigate = useNavigate()
     const {
         formato, documentos, isLoading, operationLoading,
-        error, generar, anular, descargar, recargar, limpiarError,
+        error, generar, regenerarPdf, anular, descargar, recargar, limpiarError,
     } = useDocumentosEmitidos(formatoId)
 
     const [showGenerar, setShowGenerar] = useState(false)
@@ -59,6 +59,7 @@ export function FormatoHistorialPage() {
             <DocumentosTable
                 documentos={documentos}
                 onDescargar={descargar}
+                onRegenerarPdf={regenerarPdf}
                 onAnular={setDocAnular}
             />
 

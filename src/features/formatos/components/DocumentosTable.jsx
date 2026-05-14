@@ -3,7 +3,7 @@ import { DocumentoEstadoBadge } from './DocumentoEstadoBadge'
 import { formatearCorrelativo, formatearFechaFormato, labelTipoSolicitante } from '../utils/formatos.utils'
 
 /** Tabla de documentos emitidos con acciones de descarga y anulación */
-export function DocumentosTable({ documentos, onDescargar, onAnular }) {
+export function DocumentosTable({ documentos, onDescargar, onRegenerarPdf, onAnular }) {
     if (documentos.length === 0) {
         return (
             <div className="rounded-xl border border-border bg-white p-8 text-center">
@@ -35,6 +35,7 @@ export function DocumentosTable({ documentos, onDescargar, onAnular }) {
                             key={doc.id}
                             documento={doc}
                             onDescargar={onDescargar}
+                            onRegenerarPdf={onRegenerarPdf}
                             onAnular={onAnular}
                         />
                     ))}
@@ -44,7 +45,7 @@ export function DocumentosTable({ documentos, onDescargar, onAnular }) {
     )
 }
 
-function DocumentoRow({ documento, onDescargar, onAnular }) {
+function DocumentoRow({ documento, onDescargar, onRegenerarPdf, onAnular }) {
     const tipoLabel = labelTipoSolicitante(documento.tipo_solicitante)
 
     return (
@@ -78,6 +79,15 @@ function DocumentoRow({ documento, onDescargar, onAnular }) {
                             title="Descargar PDF"
                         >
                             <Icon name="download" className="h-4 w-4" />
+                        </button>
+                    )}
+                    {documento.estado === 'activo' && (
+                        <button
+                            onClick={() => onRegenerarPdf(documento)}
+                            className="rounded-lg p-2 text-amber-600 transition-colors hover:bg-amber-50"
+                            title="Regenerar PDF con el mismo correlativo"
+                        >
+                            <Icon name="refresh" className="h-4 w-4" />
                         </button>
                     )}
                     {documento.estado === 'activo' && (

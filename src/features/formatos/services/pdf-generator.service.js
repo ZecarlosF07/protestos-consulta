@@ -1,5 +1,10 @@
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 
+import {
+    CONSTANCIA_PDF_FIELDS,
+    FORMATO_CONSTANCIA_ANOTACION,
+} from '../types/constancia-anotacion.types'
+
 /** Posición del correlativo (esquina superior derecha) */
 const CORRELATIVO_CONFIG = {
     offsetRight: 80,
@@ -18,13 +23,19 @@ const TEMPLATES_BASE_PATH = '/templates'
  * @param {string} formatoNombre - Nombre legible del formato
  * @param {string} formatoCodigo - Código del formato (nombre del archivo plantilla)
  * @param {number} correlativo - Número correlativo a insertar
+ * @param {Object|null} datosDocumento - Datos dinámicos para plantillas con campos
  * @returns {Promise<Uint8Array>} Bytes del PDF generado
  */
-export async function generarPdfConCorrelativo(formatoNombre, formatoCodigo, correlativo) {
+export async function generarPdfConCorrelativo(
+    formatoNombre,
+    formatoCodigo,
+    correlativo,
+    datosDocumento = null
+) {
     const plantillaBytes = await cargarPlantilla(formatoCodigo)
 
     if (plantillaBytes) {
-        return insertarCorrelativoEnPlantilla(plantillaBytes, correlativo)
+        return insertarDatosEnPlantilla(plantillaBytes, formatoCodigo, correlativo, datosDocumento)
     }
 
     return generarPdfBase(formatoNombre, formatoCodigo, correlativo)
@@ -44,8 +55,8 @@ async function cargarPlantilla(codigo) {
     }
 }
 
-/** Inserta el correlativo en una plantilla PDF existente */
-async function insertarCorrelativoEnPlantilla(plantillaBytes, correlativo) {
+/** Inserta el correlativo y campos dinámicos en una plantilla PDF existente. */
+async function insertarDatosEnPlantilla(plantillaBytes, formatoCodigo, correlativo, datosDocumento) {
     const doc = await PDFDocument.load(plantillaBytes)
     const pages = doc.getPages()
 
@@ -54,17 +65,71 @@ async function insertarCorrelativoEnPlantilla(plantillaBytes, correlativo) {
     const firstPage = pages[0]
     const { width } = firstPage.getSize()
     const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
+    const fontRegular = await doc.embedFont(StandardFonts.Helvetica)
 
-    const texto = `N° ${String(correlativo).padStart(6, '0')}`
-    firstPage.drawText(texto, {
-        x: width - CORRELATIVO_CONFIG.offsetRight,
-        y: firstPage.getSize().height - CORRELATIVO_CONFIG.offsetTop,
-        size: CORRELATIVO_CONFIG.fontSize,
-        font: fontBold,
-        color: CORRELATIVO_CONFIG.color,
-    })
+    dibujarCorrelativo(firstPage, fontBold, correlativo, width, firstPage.getSize().height)
+
+    if (formatoCodigo === FORMATO_CONSTANCIA_ANOTACION && datosDocumento) {
+        dibujarCamposConstancia(firstPage, fontBold, fontRegular, datosDocumento)
+    }
 
     return doc.save()
+}
+
+/** Dibuja los campos propios de la constancia de anotación. */
+function dibujarCamposConstancia(page, fontBold, fontRegular, datosDocumento) {
+    Object.entries(CONSTANCIA_PDF_FIELDS).forEach(([field, config]) => {
+        const value = datosDocumento[field]?.trim()
+        if (!value) return
+
+        dibujarTextoAjustado(page, value.toUpperCase(), {
+            ...config,
+            font: usarNegritaConstancia(field) ? fontBold : fontRegular,
+            color: rgb(0.05, 0.05, 0.05),
+        })
+    })
+}
+
+/** Dibuja una línea reduciendo tamaño si el texto excede el ancho permitido. */
+function dibujarTextoAjustado(page, texto, config) {
+    let sanitizedText = texto.replace(/\s+/g, ' ')
+    const minFontSize = config.minFontSize ?? config.fontSize
+    let size = config.fontSize
+
+    while (size > minFontSize && config.font.widthOfTextAtSize(sanitizedText, size) > config.maxWidth) {
+        size -= 0.5
+    }
+
+    sanitizedText = truncarTexto(sanitizedText, config.font, size, config.maxWidth)
+
+    page.drawText(sanitizedText, {
+        x: config.x,
+        y: config.y,
+        size,
+        font: config.font,
+        color: config.color,
+    })
+}
+
+function truncarTexto(texto, font, size, maxWidth) {
+    if (font.widthOfTextAtSize(texto, size) <= maxWidth) return texto
+
+    const suffix = '...'
+    let output = texto
+    while (output.length > 0 && font.widthOfTextAtSize(`${output}${suffix}`, size) > maxWidth) {
+        output = output.slice(0, -1).trimEnd()
+    }
+
+    return `${output}${suffix}`
+}
+
+function usarNegritaConstancia(field) {
+    return [
+        'deudor_documento',
+        'deudor_nombre_completo',
+        'deudor_domicilio',
+        'monto_moneda',
+    ].includes(field)
 }
 
 /** Genera un PDF base cuando no existe plantilla (fallback) */

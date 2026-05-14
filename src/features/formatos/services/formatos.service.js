@@ -8,7 +8,7 @@ const DOCUMENTO_SELECT = `
     tipo_solicitante, nro_documento, nombre_solicitante,
     pdf_ruta, estado, emitido_por,
     anulado_por, fecha_anulacion, motivo_anulacion,
-    created_at,
+    metadata, created_at,
     emisor:usuarios!documentos_emitidos_emitido_por_fkey(nombre_completo),
     anulador:usuarios!documentos_emitidos_anulado_por_fkey(nombre_completo)
 `
@@ -49,9 +49,21 @@ export async function obtenerDocumentos(formatoId) {
     return data ?? []
 }
 
+/** Obtiene un documento emitido por ID */
+export async function obtenerDocumentoPorId(documentoId) {
+    const { data, error } = await supabase
+        .from('documentos_emitidos')
+        .select(DOCUMENTO_SELECT)
+        .eq('id', documentoId)
+        .single()
+
+    if (error) throw new Error(error.message)
+    return data
+}
+
 /**
  * Genera un nuevo documento con correlativo atómico.
- * Usa transacción para evitar duplicados por concurrencia.
+ * La RPC incrementa el correlativo e inserta el historial en la misma transacción.
  */
 export async function generarDocumento({
     formatoId,
@@ -60,34 +72,20 @@ export async function generarDocumento({
     nombreSolicitante,
     pdfRuta,
     emitidoPor,
+    metadata = null,
 }) {
-    // Incrementar correlativo atómicamente
-    const { data: formato, error: fError } = await supabase.rpc(
-        'incrementar_correlativo',
-        { p_formato_id: formatoId }
-    )
-
-    if (fError) throw new Error(`Error generando correlativo: ${fError.message}`)
-
-    const nuevoCorrelativo = formato
-
-    // Insertar documento emitido
-    const { data, error } = await supabase
-        .from('documentos_emitidos')
-        .insert({
-            formato_id: formatoId,
-            correlativo: nuevoCorrelativo,
-            tipo_solicitante: tipoSolicitante,
-            nro_documento: nroDocumento,
-            nombre_solicitante: nombreSolicitante,
-            pdf_ruta: pdfRuta,
-            emitido_por: emitidoPor,
-        })
-        .select(DOCUMENTO_SELECT)
-        .single()
+    const { data: documentoId, error } = await supabase.rpc('generar_documento_emitido', {
+        p_formato_id: formatoId,
+        p_tipo_solicitante: tipoSolicitante,
+        p_nro_documento: nroDocumento,
+        p_nombre_solicitante: nombreSolicitante,
+        p_pdf_ruta: pdfRuta,
+        p_emitido_por: emitidoPor,
+        p_metadata: metadata,
+    })
 
     if (error) throw new Error(error.message)
-    return data
+    return obtenerDocumentoPorId(documentoId)
 }
 
 /** Anula un documento emitido */
@@ -112,7 +110,7 @@ export async function anularDocumento(documentoId, anuladoPor, motivo) {
 }
 
 /** Sube un PDF generado al storage */
-export async function subirPdfGenerado(pdfBytes, formatoCodigo, correlativo) {
+export async function subirPdfGenerado(pdfBytes, formatoCodigo, correlativo, { upsert = false } = {}) {
     const ruta = `${FORMATOS_STORAGE_PREFIX}/${formatoCodigo}/${formatoCodigo}_${correlativo}.pdf`
 
     const { error } = await supabase.storage
@@ -120,7 +118,7 @@ export async function subirPdfGenerado(pdfBytes, formatoCodigo, correlativo) {
         .upload(ruta, pdfBytes, {
             contentType: 'application/pdf',
             cacheControl: '3600',
-            upsert: false,
+            upsert,
         })
 
     if (error) throw new Error(`Error subiendo PDF: ${error.message}`)

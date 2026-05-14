@@ -32,6 +32,7 @@
  * @property {string} [anulado_por]
  * @property {string} [fecha_anulacion]
  * @property {string} [motivo_anulacion]
+ * @property {Object} [metadata]
  * @property {string} created_at
  * @property {{ nombre_completo: string }} [emisor]
  * @property {{ nombre_completo: string }} [anulador]
